@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 import type { Email } from "@/services/gmail/gmail.types";
+import type { Label } from "@/lib/validations";
 
 interface UseEmailsOptions {
-  label?: "INBOX" | "SENT";
+  label?: Label;
   pageToken?: string;
   query?: string;
   from?: string;

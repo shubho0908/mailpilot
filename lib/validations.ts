@@ -3,6 +3,10 @@ import { z } from "zod";
 const emailSchema = z.string().email();
 const emailOrArraySchema = z.union([emailSchema, z.array(emailSchema)]);
 
+const labelSchema = z.enum(["INBOX", "SENT"]);
+
+export type Label = z.infer<typeof labelSchema>;
+
 export const sendEmailSchema = z.object({
   to: emailOrArraySchema,
   subject: z.string().min(1, "Subject is required"),
@@ -15,11 +19,12 @@ export const sendEmailSchema = z.object({
   references: z.array(z.string()).optional(),
 });
 
+export type ListEmailsQuery = z.infer<typeof listEmailsQuerySchema>;
+
 export const listEmailsQuerySchema = z.object({
-  label: z.enum(["INBOX", "SENT"]).optional(),
-  maxResults: z.coerce.number().min(1).max(100).default(20),
+  label: labelSchema.optional(),
+  maxResults: z.coerce.number().optional(),
   pageToken: z.string().optional(),
-  page: z.coerce.number().min(1).optional(),
   query: z.string().optional(),
   from: z.string().optional(),
   to: z.string().optional(),
@@ -27,6 +32,3 @@ export const listEmailsQuerySchema = z.object({
   after: z.string().optional(),
   before: z.string().optional(),
 });
-
-export type SendEmailInput = z.infer<typeof sendEmailSchema>;
-export type ListEmailsQuery = z.infer<typeof listEmailsQuerySchema>;

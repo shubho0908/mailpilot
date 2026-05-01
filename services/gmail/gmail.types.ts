@@ -1,5 +1,6 @@
 import type { gmail_v1 } from "googleapis";
 import type { Credentials } from "google-auth-library";
+import type { Label } from "@/lib/validations";
 
 export interface GmailClientAuth {
   accessToken: string;
@@ -10,7 +11,7 @@ export interface GmailClientAuth {
 export type GmailAuth = string | GmailClientAuth;
 
 export interface GmailFilter {
-  label?: "INBOX" | "SENT";
+  label?: Label;
   from?: string;
   to?: string;
   subject?: string;

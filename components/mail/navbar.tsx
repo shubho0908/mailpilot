@@ -4,18 +4,28 @@ import { useTheme } from "next-themes";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { AssistantToggle } from "./assistantPanel";
+import { useAssistantStore } from "@/lib/store/assistant-store";
+import { cn } from "@/lib/utils";
 
 export function MailNavbar() {
   const pathname = usePathname();
   const { setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const { isOpen } = useAssistantStore();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   return (
-    <nav className="fixed top-0 left-1/2 -translate-x-1/2 z-40 px-4 sm:px-6">
+    <nav
+      className={cn(
+        "fixed top-0 left-1/2 z-40 px-4 sm:px-6 transition-transform duration-300 ease-out",
+        isOpen && "-translate-x-[calc(50%+200px)]",
+        !isOpen && "-translate-x-1/2"
+      )}
+    >
       <div className="flex items-center justify-between gap-2 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-2xl rounded-2xl px-3 py-2.5 mt-3 sm:mt-4 border border-white/40 dark:border-zinc-700/40 shadow-[0_8px_32px_-4px_rgba(0,0,0,0.08),0_4px_16px_-4px_rgba(0,0,0,0.04),0_2px_8px_-2px_rgba(0,0,0,0.02)] dark:shadow-[0_8px_32px_-4px_rgba(0,0,0,0.5),0_4px_16px_-4px_rgba(0,0,0,0.3),0_2px_8px_-2px_rgba(0,0,0,0.2)] ring-1 ring-white/50 dark:ring-zinc-600/50">
         <div className="flex items-center gap-2.5 pr-3 border-r border-zinc-200/60 dark:border-zinc-800/60 flex-shrink-0">
           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-[0_2px_8px_-1px_rgba(16,185,129,0.15)]">
@@ -83,7 +93,7 @@ export function MailNavbar() {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+                    d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12 a4 4 0 11-8 0 4 4 0 018 0z"
                   />
                 </svg>
               )
@@ -99,9 +109,11 @@ export function MailNavbar() {
             )}
           </button>
 
+          <AssistantToggle />
+
           <Link
             href="/compose"
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white text-sm font-medium tracking-tight transition-all duration-200 hover:from-emerald-600 hover:to-teal-700 shadow-[0_2px_8px_-1px_rgba(16,185,129,0.2)] cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-500 dark:bg-emerald-600 !text-white text-sm font-medium tracking-tight transition-all duration-200 hover:bg-emerald-600 dark:hover:bg-emerald-700 shadow-[0_1px_3px_-1px_rgba(16,185,129,0.2)] cursor-pointer [&_svg]:text-white"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
