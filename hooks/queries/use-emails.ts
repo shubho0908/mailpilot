@@ -30,7 +30,17 @@ export function useEmails({
   before,
 }: UseEmailsOptions = {}) {
   return useQuery({
-    queryKey: queryKeys.emails.list(label, undefined, pageToken, query, from, to, subject, after, before),
+    queryKey: queryKeys.emails.list(
+      label,
+      undefined,
+      pageToken,
+      query,
+      from,
+      to,
+      subject,
+      after,
+      before
+    ),
     queryFn: async (): Promise<EmailsResponse> => {
       const params = new URLSearchParams({ label });
       if (pageToken) {

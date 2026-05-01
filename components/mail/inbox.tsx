@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState, useEffect } from "react";
+import { useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEmails } from "@/hooks/queries/use-emails";
 import type { Email } from "@/services/gmail/gmail.types";
@@ -78,12 +78,12 @@ export function Inbox() {
 
   const handleFilterChange = useCallback(
     (newFilters: Partial<typeof filters>) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete("pageToken");
-    router.push(`?${params.toString()}`, { scroll: false });
-    setFilters(newFilters);
-  },
-  [router, searchParams, setFilters]
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("pageToken");
+      router.push(`?${params.toString()}`, { scroll: false });
+      setFilters(newFilters);
+    },
+    [router, searchParams, setFilters]
   );
 
   const senderOptions = useMemo(
@@ -118,7 +118,9 @@ export function Inbox() {
                 Inbox
               </h1>
               <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed max-w-md">
-                {isLoading && !data ? "Loading your emails..." : `${emails.length} email${emails.length !== 1 ? "s" : ""}`}
+                {isLoading && !data
+                  ? "Loading your emails..."
+                  : `${emails.length} email${emails.length !== 1 ? "s" : ""}`}
               </p>
             </div>
           </div>

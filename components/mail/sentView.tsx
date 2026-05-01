@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useEffect, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEmails } from "@/hooks/queries/use-emails";
 import type { Email } from "@/services/gmail/gmail.types";
@@ -120,7 +120,9 @@ export function SentView() {
                 Sent
               </h1>
               <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed max-w-md">
-                {isLoading && !data ? "Loading your emails..." : `${emails.length} email${emails.length !== 1 ? "s" : ""}${hasActiveFilters && data?.resultSizeEstimate ? ` (filtered from ${data.resultSizeEstimate})` : ""}`}
+                {isLoading && !data
+                  ? "Loading your emails..."
+                  : `${emails.length} email${emails.length !== 1 ? "s" : ""}${hasActiveFilters && data?.resultSizeEstimate ? ` (filtered from ${data.resultSizeEstimate})` : ""}`}
               </p>
             </div>
             {hasActiveFilters && !isLoading && (

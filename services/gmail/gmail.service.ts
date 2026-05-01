@@ -10,13 +10,12 @@ import {
   createMimeMessage,
 } from "./gmail.mime";
 import type {
-  Email,
   GmailAuth,
-  GmailFilter,
-  GmailMessage,
   ListEmailsOptions,
   ListEmailsResult,
   SendEmailPayload,
+  GmailMessage,
+  Email,
 } from "./gmail.types";
 import { handleApiError } from "@/lib/error-mapping";
 import { createLogger } from "@/lib/logger";
