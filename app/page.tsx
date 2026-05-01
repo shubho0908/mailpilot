@@ -1,22 +1,27 @@
 import { SignInButton } from "@/components/auth/SignInButton";
+import { MailLayout } from "@/components/mail/mailLayout";
+import { getCurrentSession } from "@/lib/auth-session";
 
-export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-center py-32 px-16 bg-white dark:bg-black">
-        <div className="flex flex-col items-center gap-6 text-center">
-          <h1 className="text-4xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            MailPilot
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            AI-Powered Mail Web Application
-          </p>
-          <p className="max-w-md text-base leading-7 text-zinc-600 dark:text-zinc-400">
-            Connect your Gmail and let AI help you manage your inbox through natural language.
-          </p>
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const session = await getCurrentSession();
+
+  if (!session) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-zinc-50 px-6 text-zinc-950 dark:bg-black dark:text-zinc-50">
+        <section className="w-full max-w-sm space-y-6 text-center">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-semibold tracking-tight">MailPilot</h1>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              Sign in to read and compose mail from your Google account.
+            </p>
+          </div>
           <SignInButton />
-        </div>
+        </section>
       </main>
-    </div>
-  );
+    );
+  }
+
+  return <MailLayout />;
 }
