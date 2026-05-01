@@ -19,7 +19,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { to, subject, body: emailBody, cc, bcc, htmlBody } = validationResult.data;
+    const {
+      to,
+      subject,
+      body: emailBody,
+      cc,
+      bcc,
+      htmlBody,
+      threadId,
+      inReplyTo,
+      references,
+    } = validationResult.data;
 
     const { auth, userId } = await requireGmailAuth(request.headers);
 
@@ -31,6 +41,9 @@ export async function POST(request: NextRequest) {
       cc: cc ? (Array.isArray(cc) ? cc : [cc]) : undefined,
       bcc: bcc ? (Array.isArray(bcc) ? bcc : [bcc]) : undefined,
       htmlBody,
+      threadId,
+      inReplyTo,
+      references,
     };
 
     const messageId = await sendEmail(auth, payload);

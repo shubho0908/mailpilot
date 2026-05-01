@@ -1,0 +1,26 @@
+import { EmailDetailWrapper } from "@/components/mail/email-detail-wrapper";
+import { MailLayout } from "@/components/mail/mailLayout";
+import { getCurrentSession } from "@/lib/auth-session";
+import { redirect } from "next/navigation";
+
+interface EmailPageProps {
+  params: Promise<{
+    id: string;
+  }>;
+}
+
+export default async function EmailPage({ params }: EmailPageProps) {
+  const session = await getCurrentSession();
+
+  if (!session) {
+    redirect("/");
+  }
+
+  const { id: emailId } = await params;
+
+  return (
+    <MailLayout>
+      <EmailDetailWrapper emailId={emailId} />
+    </MailLayout>
+  );
+}

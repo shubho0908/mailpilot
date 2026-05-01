@@ -10,12 +10,16 @@ export const sendEmailSchema = z.object({
   cc: emailOrArraySchema.optional(),
   bcc: emailOrArraySchema.optional(),
   htmlBody: z.string().optional(),
+  threadId: z.string().optional(),
+  inReplyTo: z.string().optional(),
+  references: z.array(z.string()).optional(),
 });
 
 export const listEmailsQuerySchema = z.object({
   label: z.enum(["INBOX", "SENT"]).optional(),
-  maxResults: z.coerce.number().min(1).max(100).default(50),
+  maxResults: z.coerce.number().min(1).max(100).default(20),
   pageToken: z.string().optional(),
+  page: z.coerce.number().min(1).optional(),
 });
 
 export type SendEmailInput = z.infer<typeof sendEmailSchema>;

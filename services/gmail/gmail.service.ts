@@ -22,7 +22,7 @@ import { handleApiError } from "@/lib/error-mapping";
 import { createLogger } from "@/lib/logger";
 
 const logger = createLogger("gmail.service");
-const DEFAULT_MAX_RESULTS = 50;
+const DEFAULT_MAX_RESULTS = 20;
 const MAX_RESULTS_LIMIT = 100;
 
 function encodeBase64Url(data: string): string {
