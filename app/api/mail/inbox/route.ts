@@ -20,10 +20,19 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { label, maxResults, pageToken } = validationResult.data;
+    const { label, maxResults, pageToken, query, from, to, subject, after, before } =
+      validationResult.data;
 
     const result = await listEmailsPage(auth, {
-      filters: { label },
+      filters: {
+        label,
+        query,
+        from,
+        to,
+        subject,
+        after,
+        before,
+      },
       maxResults,
       pageToken,
     });

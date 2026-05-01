@@ -109,15 +109,6 @@ function parseMessage(message: GmailMessage): Email {
   };
 }
 
-export async function listEmails(
-  auth: GmailAuth,
-  filters: GmailFilter = {},
-  maxResults = 50
-): Promise<Email[]> {
-  const result = await listEmailsPage(auth, { filters, maxResults });
-  return result.emails;
-}
-
 export async function listEmailsPage(
   auth: GmailAuth,
   options: ListEmailsOptions = {}
@@ -177,25 +168,6 @@ export async function getEmail(auth: GmailAuth, id: string): Promise<Email> {
   } catch (error) {
     logger.error("Failed to get email", error, { id });
     handleApiError(error, "getEmail");
-  }
-}
-
-export async function getThread(auth: GmailAuth, threadId: string): Promise<Email[]> {
-  try {
-    const gmail = await getGmailClient(auth);
-    const response = await gmail.users.threads.get({
-      userId: "me",
-      id: threadId,
-      format: "full",
-    });
-
-    const thread = response.data;
-    const messages = thread.messages || [];
-    const validMessages = messages.filter(isGmailMessage);
-    return validMessages.map((message) => parseMessage(message));
-  } catch (error) {
-    logger.error("Failed to get thread", error, { threadId });
-    handleApiError(error, "getThread");
   }
 }
 

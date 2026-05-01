@@ -5,6 +5,12 @@ import type { Email } from "@/services/gmail/gmail.types";
 interface UseEmailsOptions {
   label?: "INBOX" | "SENT";
   pageToken?: string;
+  query?: string;
+  from?: string;
+  to?: string;
+  subject?: string;
+  after?: string;
+  before?: string;
 }
 
 interface EmailsResponse {
@@ -13,13 +19,40 @@ interface EmailsResponse {
   resultSizeEstimate?: number;
 }
 
-export function useEmails({ label = "INBOX", pageToken }: UseEmailsOptions = {}) {
+export function useEmails({
+  label = "INBOX",
+  pageToken,
+  query,
+  from,
+  to,
+  subject,
+  after,
+  before,
+}: UseEmailsOptions = {}) {
   return useQuery({
-    queryKey: queryKeys.emails.list(label, undefined, pageToken),
+    queryKey: queryKeys.emails.list(label, undefined, pageToken, query, from, to, subject, after, before),
     queryFn: async (): Promise<EmailsResponse> => {
       const params = new URLSearchParams({ label });
       if (pageToken) {
         params.append("pageToken", pageToken);
+      }
+      if (query) {
+        params.append("query", query);
+      }
+      if (from) {
+        params.append("from", from);
+      }
+      if (to) {
+        params.append("to", to);
+      }
+      if (subject) {
+        params.append("subject", subject);
+      }
+      if (after) {
+        params.append("after", after);
+      }
+      if (before) {
+        params.append("before", before);
       }
       const response = await fetch(`/api/mail/inbox?${params.toString()}`);
       if (!response.ok) {

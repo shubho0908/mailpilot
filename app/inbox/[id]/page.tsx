@@ -1,4 +1,4 @@
-import { EmailDetailWrapper } from "@/components/mail/email-detail-wrapper";
+import { EmailDetailWrapper } from "@/components/mail/emailDetailWrapper";
 import { MailLayout } from "@/components/mail/mailLayout";
 import { getCurrentSession } from "@/lib/auth-session";
 import { redirect } from "next/navigation";

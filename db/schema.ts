@@ -91,3 +91,10 @@ export const accountRelations = relations(account, ({ one }) => ({
     references: [user.id],
   }),
 }));
+
+export const verificationRelations = relations(verification, ({ one }) => ({
+  user: one(user, {
+    fields: [verification.identifier],
+    references: [user.email],
+  }),
+}));

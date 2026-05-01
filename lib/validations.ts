@@ -20,6 +20,12 @@ export const listEmailsQuerySchema = z.object({
   maxResults: z.coerce.number().min(1).max(100).default(20),
   pageToken: z.string().optional(),
   page: z.coerce.number().min(1).optional(),
+  query: z.string().optional(),
+  from: z.string().optional(),
+  to: z.string().optional(),
+  subject: z.string().optional(),
+  after: z.string().optional(),
+  before: z.string().optional(),
 });
 
 export type SendEmailInput = z.infer<typeof sendEmailSchema>;

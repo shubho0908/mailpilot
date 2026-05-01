@@ -66,11 +66,3 @@ export async function getGmailClient(auth: GmailAuth): Promise<gmail_v1.Gmail> {
 
   return google.gmail({ version: "v1", auth: oauth2Client });
 }
-
-export async function getGmailClientWithRefresh(
-  accessToken: string,
-  refreshToken: string,
-  onTokens?: GmailClientAuth["onTokens"]
-): Promise<gmail_v1.Gmail> {
-  return getGmailClient({ accessToken, refreshToken, onTokens });
-}

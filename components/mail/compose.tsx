@@ -62,7 +62,19 @@ export function Compose({ onClose }: { onClose: () => void }) {
         }
       );
     },
-    [sendEmail, to, subject, body, cc, bcc, threadId, inReplyTo, references, onClose]
+    [
+      sendEmail,
+      to,
+      subject,
+      body,
+      cc,
+      bcc,
+      threadId,
+      inReplyTo,
+      references,
+      onClose,
+      setComposeState,
+    ]
   );
 
   const handleCancel = useCallback(() => {

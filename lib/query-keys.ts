@@ -2,13 +2,18 @@ export const queryKeys = {
   emails: {
     all: ["emails"] as const,
     lists: () => [...queryKeys.emails.all, "list"] as const,
-    list: (label: string, page?: number, pageToken?: string) => {
+    list: (label: string, page?: number, pageToken?: string, query?: string, from?: string, to?: string, subject?: string, after?: string, before?: string) => {
       const baseKey = [...queryKeys.emails.lists(), label] as const;
-      if (page === undefined && !pageToken) return baseKey;
       const key: (string | number)[] = [...baseKey];
       if (page !== undefined) key.push(page.toString());
       if (pageToken) key.push(pageToken);
-      return key as readonly (string | number)[];
+      if (query) key.push(query);
+      if (from) key.push(from);
+      if (to) key.push(to);
+      if (subject) key.push(subject);
+      if (after) key.push(after);
+      if (before) key.push(before);
+      return key;
     },
   },
   email: {

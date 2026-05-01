@@ -11,6 +11,7 @@ const GOOGLE_GMAIL_SCOPES = [
 
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL!,
+  secret: process.env.BETTER_AUTH_SECRET || crypto.randomUUID(),
   database: drizzleAdapter(db, {
     provider: "pg",
     schema: {
@@ -33,6 +34,17 @@ export const auth = betterAuth({
   advanced: {
     cookiePrefix: "better-auth",
     generateId: () => crypto.randomUUID(),
+    cookies: {
+      sessionToken: {
+        name: "better-auth.session_token",
+        options: {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: 60 * 60 * 24 * 7,
+        },
+      },
+    },
   },
   onAPIError: {
     throw: false,
