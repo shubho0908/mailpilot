@@ -100,7 +100,7 @@ export function EmailHeader({
               <Button
                 onClick={onDelete}
                 size="sm"
-                className="h-9 min-w-[44px] px-2 text-xs font-medium rounded-lg text-red-600 transition-all duration-200 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 sm:h-9 sm:w-auto sm:px-4 sm:text-sm"
+                className="h-9 min-w-[44px] px-2 text-xs font-medium rounded-lg bg-red-600 text-white shadow-sm shadow-red-500/20 transition-all duration-200 hover:bg-red-700 dark:bg-red-600 dark:text-white dark:shadow-red-500/30 dark:hover:bg-red-700 sm:h-9 sm:w-auto sm:px-4 sm:text-sm"
               >
                 <Trash2 className="h-4 w-4" />
                 <span className="ml-1.5">Delete</span>

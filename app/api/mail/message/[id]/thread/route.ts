@@ -29,7 +29,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       { email: currentEmail, thread },
       {
         headers: {
-          "Cache-Control": "private, max-age=300",
+          "Cache-Control": "private, no-store",
         },
       }
     );

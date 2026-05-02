@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
       },
       {
         headers: {
-          "Cache-Control": "private, max-age=30",
+          "Cache-Control": "private, no-store",
         },
       }
     );

@@ -82,7 +82,11 @@ export class QuotaExceededError extends AppError {
   }
 }
 
-type AuthErrorCode = "UNAUTHORIZED" | "NO_ACCESS_TOKEN" | "TOKEN_EXPIRED";
+export enum AuthErrorCode {
+  Unauthorized = "UNAUTHORIZED",
+  NoAccessToken = "NO_ACCESS_TOKEN",
+  TokenExpired = "TOKEN_EXPIRED",
+}
 
 export class AuthError extends Error {
   code: AuthErrorCode;

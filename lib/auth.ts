@@ -3,6 +3,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@/db";
 import { user, session, account, verification } from "@/db/schema";
 import { requireEnv } from "@/lib/env";
+import { RuntimeEnvironment } from "@/lib/sync/constants";
 
 const GOOGLE_GMAIL_SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
@@ -40,7 +41,7 @@ export const auth = betterAuth({
         name: "better-auth.session_token",
         options: {
           httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
+          secure: process.env.NODE_ENV === RuntimeEnvironment.Production,
           sameSite: "lax",
           maxAge: 60 * 60 * 24 * 7,
         },

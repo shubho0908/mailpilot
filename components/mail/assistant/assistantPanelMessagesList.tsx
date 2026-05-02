@@ -25,6 +25,7 @@ interface AssistantPanelMessagesListProps {
   isThinking: boolean;
   onApproveSend: () => void;
   onRejectSend: () => void;
+  isSending: boolean;
 }
 
 export function AssistantPanelMessagesList({
@@ -34,6 +35,7 @@ export function AssistantPanelMessagesList({
   isThinking,
   onApproveSend,
   onRejectSend,
+  isSending,
 }: AssistantPanelMessagesListProps) {
   return (
     <div className="space-y-4">
@@ -66,7 +68,7 @@ export function AssistantPanelMessagesList({
       {pendingApproval && (
         <PendingApprovalDialog
           pendingApproval={pendingApproval}
-          isSending={false}
+          isSending={isSending}
           onApprove={onApproveSend}
           onReject={onRejectSend}
         />

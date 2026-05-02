@@ -8,6 +8,13 @@
       "when": 1777561217231,
       "tag": "0000_useful_fenris",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1777718102384,
+      "tag": "0001_slim_ozymandias",
+      "breakpoints": true
     }
   ]
 }

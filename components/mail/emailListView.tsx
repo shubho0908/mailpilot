@@ -16,7 +16,7 @@ import {
   mailFiltersFromSearchParams,
 } from "@/lib/mail/filter-url";
 import { normalizeInclusiveDateRange } from "@/lib/mail/date-range";
-import { mailViewByLabel } from "@/lib/mail/types";
+import { mailLabelSchema, mailViewByLabel } from "@/lib/mail/types";
 import { EmailListViewHeader } from "./emailListView/emailListViewHeader";
 import { EmailListViewFilter } from "./emailListView/emailListViewFilter";
 
@@ -40,7 +40,8 @@ function EmailListViewContent({
   const router = useRouter();
   const { push, replace } = router;
   const searchParams = useSearchParams();
-  const pageToken = searchParams.get("pageToken") || undefined;
+  const { get } = searchParams;
+  const pageToken = get.call(searchParams, "pageToken") || undefined;
   const view = mailViewByLabel[label];
 
   const storedFilters = useMailStore((state) => state.filters);
@@ -94,6 +95,7 @@ function EmailListViewContent({
     filters.sender ||
     filters.unread !== null ||
     filters.maxResults;
+  const isSentLabel = label === mailLabelSchema.enum.SENT;
 
   const handleEmailClick = useCallback(
     (id: string) => {
@@ -251,14 +253,14 @@ function EmailListViewContent({
             <h2 className="text-xl sm:text-2xl font-medium text-zinc-900 dark:text-zinc-50 mb-2 sm:mb-3">
               {hasActiveFilters
                 ? "No emails match your filters"
-                : label === "SENT"
+                : isSentLabel
                   ? "No sent emails"
                   : "No emails found"}
             </h2>
             <p className="text-sm sm:text-base text-zinc-500 dark:text-zinc-400 leading-relaxed max-w-md mb-6">
               {hasActiveFilters
                 ? "Try adjusting your search criteria or clear the filters to see more emails."
-                : label === "SENT"
+                : isSentLabel
                   ? "Your sent folder is empty. Emails you send will appear here."
                   : "Your inbox is empty. New emails will appear here when they arrive."}
             </p>

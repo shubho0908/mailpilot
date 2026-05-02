@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { pgTable, text, timestamp, boolean, index } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, index, uniqueIndex } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -73,9 +73,31 @@ export const verification = pgTable(
   (table) => [index("verification_identifier_idx").on(table.identifier)]
 );
 
-export const userRelations = relations(user, ({ many }) => ({
+export const gmailSyncState = pgTable(
+  "gmail_sync_state",
+  {
+    userId: text("user_id")
+      .primaryKey()
+      .references(() => user.id, { onDelete: "cascade" }),
+    emailAddress: text("email_address").notNull(),
+    historyId: text("history_id").notNull(),
+    watchExpiration: timestamp("watch_expiration"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("gmail_sync_state_emailAddress_idx").on(table.emailAddress),
+    index("gmail_sync_state_watchExpiration_idx").on(table.watchExpiration),
+  ]
+);
+
+export const userRelations = relations(user, ({ many, one }) => ({
   sessions: many(session),
   accounts: many(account),
+  gmailSyncState: one(gmailSyncState),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -96,5 +118,12 @@ export const verificationRelations = relations(verification, ({ one }) => ({
   user: one(user, {
     fields: [verification.identifier],
     references: [user.email],
+  }),
+}));
+
+export const gmailSyncStateRelations = relations(gmailSyncState, ({ one }) => ({
+  user: one(user, {
+    fields: [gmailSyncState.userId],
+    references: [user.id],
   }),
 }));

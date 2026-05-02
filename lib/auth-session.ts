@@ -7,9 +7,10 @@ import type { GmailAuth, GmailClientAuth } from "@/services/gmail/gmail.types";
 import type { Credentials } from "google-auth-library";
 import { NextResponse } from "next/server";
 import { createLogger } from "@/lib/logger";
-import { isAppError, AuthError, isAuthError } from "@/lib/errors";
+import { isAppError, AuthError, AuthErrorCode, isAuthError } from "@/lib/errors";
 
 const logger = createLogger("auth:utils");
+const GOOGLE_PROVIDER_ID = "google";
 
 export async function getCurrentSession(headers?: Headers) {
   return auth.api.getSession({
@@ -24,18 +25,27 @@ export async function requireGmailAuth(headers: Headers): Promise<{
   const session = await getCurrentSession(headers);
 
   if (!session) {
-    throw new AuthError("Unauthorized", "UNAUTHORIZED");
+    throw new AuthError("Unauthorized", AuthErrorCode.Unauthorized);
   }
 
+  const auth = await getGmailAuthForUserId(session.user.id);
+
+  return {
+    auth,
+    userId: session.user.id,
+  };
+}
+
+export async function getGmailAuthForUserId(userId: string): Promise<GmailAuth> {
   const accounts = await db.query.account.findMany({
-    where: eq(account.userId, session.user.id),
+    where: eq(account.userId, userId),
   });
 
-  const googleAccount = accounts.find((acc) => acc.providerId === "google");
+  const googleAccount = accounts.find((acc) => acc.providerId === GOOGLE_PROVIDER_ID);
 
   if (!googleAccount || !googleAccount.accessToken) {
-    logger.warn("No Google access token found for user", { userId: session.user.id });
-    throw new AuthError("No Google access token found", "NO_ACCESS_TOKEN");
+    logger.warn("No Google access token found for user", { userId });
+    throw new AuthError("No Google access token found", AuthErrorCode.NoAccessToken);
   }
 
   const now = new Date();
@@ -46,9 +56,9 @@ export async function requireGmailAuth(headers: Headers): Promise<{
 
   if (isExpired && !googleAccount.refreshToken) {
     logger.warn("Google access token expired without refresh token", {
-      userId: session.user.id,
+      userId,
     });
-    throw new AuthError("Access token expired, please re-authenticate", "TOKEN_EXPIRED");
+    throw new AuthError("Access token expired, please re-authenticate", AuthErrorCode.TokenExpired);
   }
 
   const auth: GmailClientAuth = {
@@ -71,21 +81,18 @@ export async function requireGmailAuth(headers: Headers): Promise<{
             .where(eq(account.id, googleAccount.id));
 
           logger.info("Access token refreshed and persisted to database", {
-            userId: session.user.id,
+            userId,
           });
         }
       } catch (error) {
         logger.error("Failed to persist refreshed token to database", error, {
-          userId: session.user.id,
+          userId,
         });
       }
     },
   };
 
-  return {
-    auth,
-    userId: session.user.id,
-  };
+  return auth;
 }
 
 export function handleAuthError(error: unknown): NextResponse {
@@ -93,13 +100,13 @@ export function handleAuthError(error: unknown): NextResponse {
     return NextResponse.json({ error: error.message }, { status: error.statusCode });
   }
   if (isAuthError(error)) {
-    if (error.code === "UNAUTHORIZED") {
+    if (error.code === AuthErrorCode.Unauthorized) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    if (error.code === "NO_ACCESS_TOKEN") {
+    if (error.code === AuthErrorCode.NoAccessToken) {
       return NextResponse.json({ error: "No Google access token found" }, { status: 401 });
     }
-    if (error.code === "TOKEN_EXPIRED") {
+    if (error.code === AuthErrorCode.TokenExpired) {
       return NextResponse.json(
         { error: "Access token expired, please re-authenticate" },
         { status: 401 }

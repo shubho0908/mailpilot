@@ -11,7 +11,9 @@ export function useEmailThread(emailId: string) {
   return useQuery({
     queryKey: queryKeys.email.thread(emailId),
     queryFn: async (): Promise<EmailThreadResponse> => {
-      const response = await fetch(`/api/mail/message/${emailId}/thread`);
+      const response = await fetch(`/api/mail/message/${emailId}/thread`, {
+        cache: "no-store",
+      });
       if (!response.ok) {
         throw new Error("Failed to fetch email thread");
       }

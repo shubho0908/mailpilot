@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 import type { Email } from "@/services/gmail/gmail.types";
 import type { Label } from "@/lib/validations";
+import { mailLabelSchema } from "@/lib/mail/types";
 
 interface UseEmailsOptions {
   label?: Label;
@@ -23,7 +24,7 @@ interface EmailsResponse {
 }
 
 export function useEmails({
-  label = "INBOX",
+  label = mailLabelSchema.enum.INBOX,
   maxResults,
   pageToken,
   query,
@@ -77,7 +78,9 @@ export function useEmails({
       if (unread !== undefined) {
         params.append("unread", unread.toString());
       }
-      const response = await fetch(`/api/mail/inbox?${params.toString()}`);
+      const response = await fetch(`/api/mail/inbox?${params.toString()}`, {
+        cache: "no-store",
+      });
       if (!response.ok) {
         throw new Error("Failed to fetch emails");
       }

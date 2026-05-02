@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import { MailNavbar } from "./navbar";
 import { useAssistantStore } from "@/lib/store/assistant-store";
+import { useMailRealtime } from "@/hooks/use-mail-realtime";
 
 interface MailLayoutProps {
   children?: React.ReactNode;
@@ -10,6 +11,7 @@ interface MailLayoutProps {
 
 function MailLayoutContent({ children }: MailLayoutProps) {
   const { isOpen } = useAssistantStore();
+  useMailRealtime();
 
   return (
     <>

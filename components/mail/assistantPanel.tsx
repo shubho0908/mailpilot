@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useReducer, useEffect } from "react";
+import { useCallback, useMemo, useRef, useReducer, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
@@ -111,6 +111,7 @@ interface AssistantPanelContentProps {
   onSendMessage: () => void;
   onInputChange: (value: string) => void;
   onClearConversation: () => void;
+  isSending: boolean;
 }
 
 function AssistantPanelContent({
@@ -127,6 +128,7 @@ function AssistantPanelContent({
   onSendMessage,
   onInputChange,
   onClearConversation,
+  isSending,
 }: AssistantPanelContentProps) {
   return (
     <>
@@ -139,6 +141,7 @@ function AssistantPanelContent({
           isThinking={isThinking}
           onApproveSend={onApproveSend}
           onRejectSend={onRejectSend}
+          isSending={isSending}
         />
       </div>
       <AssistantPanelFooter
@@ -180,6 +183,7 @@ export function AssistantPanel({ className }: AssistantPanelProps = {}) {
 
   const { messages, input, isThinking, error, pendingApproval } = state;
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [isSending, setIsSending] = useState(false);
 
   const compactHistory = useMemo(
     () =>
@@ -395,6 +399,7 @@ export function AssistantPanel({ className }: AssistantPanelProps = {}) {
   const handleApproveSend = useCallback(() => {
     if (!pendingApproval) return;
 
+    setIsSending(true);
     dispatch({ type: "SET_ERROR", value: null });
 
     if (pendingApproval.deleteEmailId) {
@@ -402,10 +407,12 @@ export function AssistantPanel({ className }: AssistantPanelProps = {}) {
         { id: pendingApproval.deleteEmailId },
         {
           onSuccess: () => {
+            setIsSending(false);
             dispatch({ type: "SET_PENDING_APPROVAL", value: null });
             push(pathForMailRoute(mailRouteSchema.enum.inbox));
           },
           onError: (deleteError) => {
+            setIsSending(false);
             dispatch({
               type: "SET_ERROR",
               value: deleteError instanceof Error ? deleteError.message : "Failed to delete email",
@@ -428,11 +435,13 @@ export function AssistantPanel({ className }: AssistantPanelProps = {}) {
         },
         {
           onSuccess: () => {
+            setIsSending(false);
             dispatch({ type: "SET_PENDING_APPROVAL", value: null });
             setComposeState(null);
             push(pathForMailRoute(mailRouteSchema.enum.sent));
           },
           onError: (sendError) => {
+            setIsSending(false);
             dispatch({
               type: "SET_ERROR",
               value: sendError instanceof Error ? sendError.message : "Failed to send email",
@@ -468,8 +477,11 @@ export function AssistantPanel({ className }: AssistantPanelProps = {}) {
 
   return (
     <>
-      <div
+      <button
+        type="button"
+        aria-label="Close assistant panel"
         aria-hidden={!isOpen}
+        tabIndex={isOpen ? 0 : -1}
         onClick={closePanel}
         className={cn(
           "fixed inset-0 z-40 bg-zinc-950/35 backdrop-blur-[2px] transition-opacity duration-300 md:hidden",
@@ -507,6 +519,7 @@ export function AssistantPanel({ className }: AssistantPanelProps = {}) {
           onSendMessage={handleSendMessage}
           onInputChange={(value: string) => dispatch({ type: "SET_INPUT", value })}
           onClearConversation={handleClearConversation}
+          isSending={isSending}
         />
       </div>
 
@@ -539,6 +552,7 @@ export function AssistantPanel({ className }: AssistantPanelProps = {}) {
           onSendMessage={handleSendMessage}
           onInputChange={(value: string) => dispatch({ type: "SET_INPUT", value })}
           onClearConversation={handleClearConversation}
+          isSending={isSending}
         />
       </div>
     </>

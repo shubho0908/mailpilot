@@ -1,13 +1,24 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 import { useEmailThread } from "@/hooks/queries/use-email-thread";
 import { useMailStore } from "@/lib/store/mail-store";
 import { useDeleteEmail } from "@/hooks/mutations/use-delete-email";
 import { composeModeSchema, mailRouteSchema, pathForMailRoute } from "@/lib/mail/types";
 import { plainTextFromEmail, replyHeadersForEmail } from "@/lib/mail/email-utils";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { EmailHeader } from "./emailHeader";
 import { ThreadMessageCard } from "./threadMessageCard";
 import { EmailDetailLoading, EmailDetailError, EmailDetailEmpty } from "./emailDetailStates";
@@ -22,7 +33,8 @@ export function EmailDetail({ emailId, onBack }: EmailDetailProps) {
   const { push } = router;
   const { data, isLoading, error, refetch } = useEmailThread(emailId);
   const { setComposeState } = useMailStore();
-  const { mutate: deleteEmail } = useDeleteEmail();
+  const { mutate: deleteEmail, isPending: isDeleting } = useDeleteEmail();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const email = data?.email;
   const threadMessages = data?.thread.messages.length ? data.thread.messages : email ? [email] : [];
   const replyTarget = threadMessages[threadMessages.length - 1] || email;
@@ -64,11 +76,16 @@ export function EmailDetail({ emailId, onBack }: EmailDetailProps) {
   }, [email, setComposeState, push]);
 
   const handleDelete = useCallback(() => {
+    setDeleteDialogOpen(true);
+  }, []);
+
+  const handleConfirmDelete = useCallback(() => {
     if (!email) return;
     deleteEmail(
       { id: email.id },
       {
         onSuccess: () => {
+          setDeleteDialogOpen(false);
           onBack();
         },
       }
@@ -107,6 +124,35 @@ export function EmailDetail({ emailId, onBack }: EmailDetailProps) {
               onForward={handleForward}
               onDelete={handleDelete}
             />
+
+            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete this email?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This is your last chance to reconsider before
+                    permanently deleting this email.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleConfirmDelete}
+                    disabled={isDeleting}
+                    variant="destructive"
+                  >
+                    {isDeleting ? (
+                      <>
+                        <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4" />
+                        Deleting...
+                      </>
+                    ) : (
+                      "Delete"
+                    )}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
 
             <div className="min-h-[200px] overflow-x-hidden sm:max-h-[600px] sm:overflow-y-auto sm:pr-2">
               <div className="space-y-4 sm:space-y-3">

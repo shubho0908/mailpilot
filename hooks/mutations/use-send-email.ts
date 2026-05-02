@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
+import { mailLabelSchema } from "@/lib/mail/types";
 import { toast } from "sonner";
 
 interface SendEmailVariables {
@@ -34,7 +35,7 @@ export function useSendEmail() {
       queryClient.invalidateQueries({ queryKey: queryKeys.emails.lists(), refetchType: "all" });
       queryClient.invalidateQueries({ queryKey: queryKeys.email.threads(), refetchType: "all" });
       queryClient.invalidateQueries({
-        queryKey: queryKeys.emails.list("SENT"),
+        queryKey: queryKeys.emails.list(mailLabelSchema.enum.SENT),
         refetchType: "all",
       });
       toast.success("Email sent successfully");

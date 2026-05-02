@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
 import { AssistantToggle } from "./assistantPanel";
+import { SyncStatusIndicator } from "./syncStatus";
 import { mailRouteSchema, mailViewSchema, pathForMailRoute } from "@/lib/mail/types";
 
 export function MailNavbar() {
@@ -66,6 +67,8 @@ export function MailNavbar() {
         </div>
 
         <div className="flex items-center gap-2 flex-shrink-0">
+          <SyncStatusIndicator />
+
           <button
             onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
             className="flex items-center justify-center w-8 h-8 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all duration-200 cursor-pointer shadow-[0_1px_3px_-1px_rgba(0,0,0,0.04)] dark:shadow-[0_1px_3px_-1px_rgba(0,0,0,0.2)]"

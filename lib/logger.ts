@@ -1,7 +1,8 @@
 import pino from "pino";
+import { RuntimeEnvironment } from "@/lib/sync/constants";
 
-const isDevelopment = process.env.NODE_ENV === "development";
-const isProduction = process.env.NODE_ENV === "production";
+const isDevelopment = process.env.NODE_ENV === RuntimeEnvironment.Development;
+const isProduction = process.env.NODE_ENV === RuntimeEnvironment.Production;
 
 export const logger = pino({
   level: process.env.LOG_LEVEL || (isDevelopment ? "debug" : "info"),

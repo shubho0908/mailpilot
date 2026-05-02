@@ -40,7 +40,7 @@ export function PendingApprovalDialog({
           onClick={onApprove}
           disabled={isSending}
           size="sm"
-          className="h-8 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 text-xs"
+          className="h-8 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 text-xs cursor-pointer"
         >
           {isSending ? (
             <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
@@ -54,7 +54,7 @@ export function PendingApprovalDialog({
           disabled={isSending}
           variant="outline"
           size="sm"
-          className="h-8 rounded-lg text-xs"
+          className="h-8 rounded-lg text-xs cursor-pointer"
         >
           Cancel
         </Button>
