@@ -197,12 +197,20 @@ export function AssistantPanel({ className }: AssistantPanelProps = {}) {
       let openEmail = undefined;
 
       if (openEmailId) {
-        const cachedData = queryClient.getQueryData<{ email: Email }>(
+        const cachedThreadData = queryClient.getQueryData<{ email: Email }>(
+          queryKeys.email.thread(openEmailId)
+        );
+        const cachedDetailData = queryClient.getQueryData<Email | { email: Email }>(
           queryKeys.email.detail(openEmailId)
         );
+        const cachedEmail =
+          cachedThreadData?.email ||
+          (cachedDetailData && "email" in cachedDetailData
+            ? cachedDetailData.email
+            : cachedDetailData);
 
-        if (cachedData?.email) {
-          openEmail = toAssistantOpenEmail(cachedData.email);
+        if (cachedEmail) {
+          openEmail = toAssistantOpenEmail(cachedEmail);
         }
       }
 

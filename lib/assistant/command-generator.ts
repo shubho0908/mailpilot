@@ -58,7 +58,7 @@ function buildSystemPrompt(context: z.infer<typeof assistantRequestSchema>["cont
     "- navigate: change view",
     "- clearFilters: reset filters",
     "Send requests: set shouldSend=true. UI requires approval.",
-    "Dates: ISO format (YYYY-MM-DD). 'last N emails' = maxResults=N. 'last N days' = dateFrom/dateTo.",
+    "Dates: ISO format (YYYY-MM-DD). For a named day like today/yesterday, set dateFrom and dateTo to that day; the app treats dateTo as inclusive. For 'from today onward', set dateFrom only. 'last N emails' = maxResults=N. 'last N days' = dateFrom/dateTo.",
     "Sender: non-email → search term, email → filter by sender.",
     "Response format: JSON with 'response' (string) and 'command' (object).",
     `Date: ${context.currentDate}. TZ: ${context.timezone || "unknown"}.`,

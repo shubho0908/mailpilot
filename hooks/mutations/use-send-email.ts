@@ -31,6 +31,7 @@ export function useSendEmail() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.emails.lists(), refetchType: "all" });
+      queryClient.invalidateQueries({ queryKey: queryKeys.email.threads(), refetchType: "all" });
       queryClient.invalidateQueries({
         queryKey: queryKeys.emails.list("SENT"),
         refetchType: "all",

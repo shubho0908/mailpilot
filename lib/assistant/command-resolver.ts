@@ -18,6 +18,7 @@ import {
   assistantCommandSchema,
   assistantRequestSchema,
 } from "@/lib/assistant/actions";
+import { normalizeInclusiveDateRange } from "@/lib/mail/date-range";
 
 function isEmailAddress(value: string | null | undefined): value is string {
   return Boolean(value && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value));
@@ -41,6 +42,9 @@ function textFromEmail(email: Email) {
 
 function buildReplyDraft(email: Email, body?: string | null): AssistantComposeDraft {
   const subject = email.subject.startsWith("Re:") ? email.subject : `Re: ${email.subject}`;
+  const references = Array.from(
+    new Set([...((email.references || []) as string[]), email.messageId])
+  ).filter((reference): reference is string => Boolean(reference));
   const original = [
     "",
     "",
@@ -61,8 +65,8 @@ function buildReplyDraft(email: Email, body?: string | null): AssistantComposeDr
     body: `${body?.trim() ? `${body.trim()}\n` : ""}${original}`,
     mode: composeModeSchema.enum.reply,
     threadId: email.threadId,
-    inReplyTo: email.id,
-    references: [email.id],
+    inReplyTo: email.messageId,
+    references: references.length ? references : undefined,
   };
 }
 
@@ -99,6 +103,10 @@ async function resolveCommand(
   if (command.type === "filter") {
     const view = command.view ?? mailViewSchema.enum.inbox;
     const filters = normalizeFilters(command);
+    const dateRange = normalizeInclusiveDateRange({
+      dateFrom: filters.dateFrom,
+      dateTo: filters.dateTo,
+    });
     actions.push({ type: "setFilters", view, filters });
 
     const result = await listEmailsPage(auth, {
@@ -107,8 +115,8 @@ async function resolveCommand(
         query: filters.search ?? undefined,
         from: isInboxView(view) ? (filters.sender ?? undefined) : undefined,
         to: isSentView(view) ? (filters.sender ?? undefined) : undefined,
-        after: filters.dateFrom ?? undefined,
-        before: filters.dateTo ?? undefined,
+        after: dateRange.after,
+        before: dateRange.before,
         unread: filters.unread ?? undefined,
       },
       maxResults: filters.maxResults ?? 5,

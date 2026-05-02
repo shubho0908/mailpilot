@@ -16,6 +16,7 @@ import type {
   SendEmailPayload,
   GmailMessage,
   Email,
+  EmailThread,
 } from "./gmail.types";
 import { handleApiError } from "@/lib/error-mapping";
 import { createLogger } from "@/lib/logger";
@@ -63,6 +64,10 @@ function isGmailMessage(message: unknown): message is GmailMessage {
   );
 }
 
+function isGmailThread(thread: unknown): thread is gmail_v1.Schema$Thread {
+  return typeof thread === "object" && thread !== null && "id" in thread && "messages" in thread;
+}
+
 function assertMessageIsParseable(message: GmailMessage): asserts message is GmailMessage & {
   id: string;
   threadId: string;
@@ -71,6 +76,14 @@ function assertMessageIsParseable(message: GmailMessage): asserts message is Gma
   if (!message.id || !message.threadId || !message.payload) {
     throw new Error("Gmail message response is missing id, threadId, or payload");
   }
+}
+
+function parseReferencesHeader(value: string | undefined): string[] {
+  if (!value) return [];
+  return value
+    .split(/\s+/)
+    .map((reference) => reference.trim())
+    .filter(Boolean);
 }
 
 function parseMessage(message: GmailMessage): Email {
@@ -94,6 +107,8 @@ function parseMessage(message: GmailMessage): Email {
   return {
     id: message.id,
     threadId: message.threadId,
+    messageId: headers["message-id"] || undefined,
+    references: parseReferencesHeader(headers["references"]),
     from,
     to,
     subject,
@@ -167,6 +182,35 @@ export async function getEmail(auth: GmailAuth, id: string): Promise<Email> {
   } catch (error) {
     logger.error("Failed to get email", error, { id });
     handleApiError(error, "getEmail");
+  }
+}
+
+export async function getEmailThread(auth: GmailAuth, threadId: string): Promise<EmailThread> {
+  try {
+    const gmail = await getGmailClient(auth);
+    const response = await gmail.users.threads.get({
+      userId: "me",
+      id: threadId,
+      format: "full",
+    });
+
+    const thread = response.data;
+    if (!isGmailThread(thread) || !thread.id) {
+      throw new Error("Invalid Gmail thread response");
+    }
+
+    const messages = (thread.messages || [])
+      .filter(isGmailMessage)
+      .map(parseMessage)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    return {
+      id: thread.id,
+      messages,
+    };
+  } catch (error) {
+    logger.error("Failed to get email thread", error, { threadId });
+    handleApiError(error, "getEmailThread");
   }
 }
 

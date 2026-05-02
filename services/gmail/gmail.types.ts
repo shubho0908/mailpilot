@@ -36,9 +36,16 @@ export interface ListEmailsResult {
   resultSizeEstimate?: number;
 }
 
+export interface EmailThread {
+  id: string;
+  messages: Email[];
+}
+
 export interface Email {
   id: string;
   threadId: string;
+  messageId?: string;
+  references?: string[];
   from: {
     name: string;
     email: string;

@@ -9,6 +9,14 @@ on:
 jobs:
   lint-and-build:
     runs-on: ubuntu-latest
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      DATABASE_URL: "postgres://ci:ci@localhost:5432/mailpilot_ci"
+      BETTER_AUTH_URL: "http://localhost:3000"
+      BETTER_AUTH_SECRET: "ci-build-secret-for-static-build-only-000000"
+      GOOGLE_CLIENT_ID: "ci-google-client-id"
+      GOOGLE_CLIENT_SECRET: "ci-google-client-secret"
+      OPENAI_API_KEY: "ci-openai-api-key"
 
     steps:
       - name: Checkout code

@@ -24,6 +24,7 @@ import {
   mailFiltersEqual,
   mailFiltersFromSearchParams,
 } from "@/lib/mail/filter-url";
+import { normalizeInclusiveDateRange } from "@/lib/mail/date-range";
 import { mailViewByLabel } from "@/lib/mail/types";
 
 interface EmailListViewProps {
@@ -68,6 +69,14 @@ export function EmailListView({
     }
     return parts.join(" ");
   }, [debouncedSearch]);
+  const gmailDateRange = useMemo(
+    () =>
+      normalizeInclusiveDateRange({
+        dateFrom: filters.dateFrom,
+        dateTo: filters.dateTo,
+      }),
+    [filters.dateFrom, filters.dateTo]
+  );
 
   const { data, isLoading, error, refetch } = useEmails({
     label,
@@ -75,8 +84,8 @@ export function EmailListView({
     query: searchQuery || undefined,
     from: showRecipientFilter ? undefined : debouncedSender || undefined,
     to: showRecipientFilter ? debouncedSender || undefined : undefined,
-    after: filters.dateFrom || undefined,
-    before: filters.dateTo || undefined,
+    after: gmailDateRange.after,
+    before: gmailDateRange.before,
     unread: filters.unread ?? undefined,
     maxResults: filters.maxResults || undefined,
   });
@@ -303,10 +312,10 @@ export function EmailListView({
             </Button>
           </div>
         ) : emails.length === 0 ? (
-          <div className="py-12 sm:py-16 text-center px-4">
-            <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-zinc-100 dark:bg-zinc-800 mb-3 sm:mb-4">
+          <div className="flex flex-col items-center justify-center py-16 sm:py-24 px-4 text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-zinc-100 dark:bg-zinc-800 mb-4 sm:mb-6">
               <svg
-                className="h-7 w-7 sm:h-8 sm:w-8 text-zinc-400"
+                className="h-8 w-8 sm:h-10 sm:w-10 text-zinc-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -319,20 +328,30 @@ export function EmailListView({
                 />
               </svg>
             </div>
-            <h2 className="text-lg sm:text-xl font-medium text-zinc-900 dark:text-zinc-50 mb-2">
+            <h2 className="text-xl sm:text-2xl font-medium text-zinc-900 dark:text-zinc-50 mb-2 sm:mb-3">
               {hasActiveFilters
                 ? "No emails match your filters"
                 : label === "SENT"
                   ? "No sent emails"
                   : "No emails found"}
             </h2>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed max-w-md">
+            <p className="text-sm sm:text-base text-zinc-500 dark:text-zinc-400 leading-relaxed max-w-md mb-6">
               {hasActiveFilters
-                ? "No emails match your filters"
+                ? "Try adjusting your search criteria or clear the filters to see more emails."
                 : label === "SENT"
-                  ? "Your sent folder is empty"
-                  : "Your inbox is empty"}
+                  ? "Your sent folder is empty. Emails you send will appear here."
+                  : "Your inbox is empty. New emails will appear here when they arrive."}
             </p>
+            {hasActiveFilters && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleClearFilters}
+                className="rounded-full px-6"
+              >
+                Clear filters
+              </Button>
+            )}
           </div>
         ) : (
           <>
