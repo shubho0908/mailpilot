@@ -38,8 +38,10 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <QueryProvider>{children}</QueryProvider>
-          <AssistantPanel />
+          <QueryProvider>
+            {children}
+            <AssistantPanel />
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>

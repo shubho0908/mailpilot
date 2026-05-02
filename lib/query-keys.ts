@@ -1,9 +1,13 @@
+const emailListRoot = ["emails", "list"];
+const emailDetailRoot = ["email", "detail"];
+
 export const queryKeys = {
   emails: {
-    all: ["emails"] as const,
-    lists: () => [...queryKeys.emails.all, "list"] as const,
+    all: ["emails"],
+    lists: () => emailListRoot,
     list: (
       label: string,
+      maxResults?: number,
       page?: number,
       pageToken?: string,
       query?: string,
@@ -11,10 +15,11 @@ export const queryKeys = {
       to?: string,
       subject?: string,
       after?: string,
-      before?: string
+      before?: string,
+      unread?: boolean
     ) => {
-      const baseKey = [...queryKeys.emails.lists(), label] as const;
-      const key: (string | number)[] = [...baseKey];
+      const key: (string | number)[] = [...emailListRoot, label];
+      if (maxResults !== undefined) key.push(maxResults.toString());
       if (page !== undefined) key.push(page.toString());
       if (pageToken) key.push(pageToken);
       if (query) key.push(query);
@@ -23,12 +28,13 @@ export const queryKeys = {
       if (subject) key.push(subject);
       if (after) key.push(after);
       if (before) key.push(before);
+      if (unread !== undefined) key.push(unread ? "unread" : "read");
       return key;
     },
   },
   email: {
-    all: ["email"] as const,
-    details: () => [...queryKeys.email.all, "detail"] as const,
-    detail: (id: string) => [...queryKeys.email.details(), id] as const,
+    all: ["email"],
+    details: () => emailDetailRoot,
+    detail: (id: string) => [...emailDetailRoot, id],
   },
-} as const;
+};

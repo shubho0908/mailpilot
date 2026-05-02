@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useEmail } from "@/hooks/queries/use-email";
 import { useMailStore } from "@/lib/store/mail-store";
+import { composeModeSchema, mailRouteSchema, pathForMailRoute } from "@/lib/mail/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -32,12 +33,12 @@ export function EmailDetail({ emailId, onBack }: EmailDetailProps) {
       initialTo: to,
       initialSubject: subject,
       initialBody: body,
-      mode: "reply",
+      mode: composeModeSchema.enum.reply,
       threadId: email.threadId,
       inReplyTo: email.id,
       references: [email.id],
     });
-    router.push("/compose");
+    router.push(pathForMailRoute(mailRouteSchema.enum.compose));
   }, [email, setComposeState, router]);
 
   const handleForward = useCallback(() => {
@@ -47,9 +48,9 @@ export function EmailDetail({ emailId, onBack }: EmailDetailProps) {
     setComposeState({
       initialSubject: subject,
       initialBody: body,
-      mode: "forward",
+      mode: composeModeSchema.enum.forward,
     });
-    router.push("/compose");
+    router.push(pathForMailRoute(mailRouteSchema.enum.compose));
   }, [email, setComposeState, router]);
 
   if (isLoading) {

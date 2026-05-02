@@ -13,8 +13,8 @@ export function Compose({ onClose }: { onClose: () => void }) {
   const setComposeState = useMailStore((state) => state.setComposeState);
 
   const [to, setTo] = useState(composeState?.initialTo || "");
-  const [cc, setCc] = useState("");
-  const [bcc, setBcc] = useState("");
+  const [cc, setCc] = useState(composeState?.initialCc || "");
+  const [bcc, setBcc] = useState(composeState?.initialBcc || "");
   const [subject, setSubject] = useState(composeState?.initialSubject || "");
   const [body, setBody] = useState(composeState?.initialBody || "");
   const [showCcBcc, setShowCcBcc] = useState(false);
@@ -28,10 +28,34 @@ export function Compose({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     if (composeState) {
       setTo(composeState.initialTo || "");
+      setCc(composeState.initialCc || "");
+      setBcc(composeState.initialBcc || "");
       setSubject(composeState.initialSubject || "");
       setBody(composeState.initialBody || "");
+      setShowCcBcc(Boolean(composeState.initialCc || composeState.initialBcc));
     }
   }, [composeState]);
+
+  const updateComposeDraft = useCallback(
+    (updates: {
+      initialTo?: string;
+      initialCc?: string;
+      initialBcc?: string;
+      initialSubject?: string;
+      initialBody?: string;
+    }) => {
+      setComposeState({
+        ...(composeState || { mode }),
+        initialTo: to,
+        initialCc: cc,
+        initialBcc: bcc,
+        initialSubject: subject,
+        initialBody: body,
+        ...updates,
+      });
+    },
+    [bcc, body, cc, composeState, mode, setComposeState, subject, to]
+  );
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -174,7 +198,10 @@ export function Compose({ onClose }: { onClose: () => void }) {
                   id="to"
                   type="email"
                   value={to}
-                  onChange={(e) => setTo(e.target.value)}
+                  onChange={(e) => {
+                    setTo(e.target.value);
+                    updateComposeDraft({ initialTo: e.target.value });
+                  }}
                   required
                   placeholder="recipient@example.com"
                   disabled={isPending || isSuccess}
@@ -205,7 +232,10 @@ export function Compose({ onClose }: { onClose: () => void }) {
                       id="cc"
                       type="email"
                       value={cc}
-                      onChange={(e) => setCc(e.target.value)}
+                      onChange={(e) => {
+                        setCc(e.target.value);
+                        updateComposeDraft({ initialCc: e.target.value });
+                      }}
                       placeholder="cc@example.com"
                       disabled={isPending || isSuccess}
                       className="h-9 sm:h-10 rounded-lg border-zinc-200 dark:border-zinc-800 text-xs sm:text-sm"
@@ -222,7 +252,10 @@ export function Compose({ onClose }: { onClose: () => void }) {
                       id="bcc"
                       type="email"
                       value={bcc}
-                      onChange={(e) => setBcc(e.target.value)}
+                      onChange={(e) => {
+                        setBcc(e.target.value);
+                        updateComposeDraft({ initialBcc: e.target.value });
+                      }}
                       placeholder="bcc@example.com"
                       disabled={isPending || isSuccess}
                       className="h-9 sm:h-10 rounded-lg border-zinc-200 dark:border-zinc-800 text-xs sm:text-sm"
@@ -242,7 +275,10 @@ export function Compose({ onClose }: { onClose: () => void }) {
                   id="subject"
                   type="text"
                   value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
+                  onChange={(e) => {
+                    setSubject(e.target.value);
+                    updateComposeDraft({ initialSubject: e.target.value });
+                  }}
                   required
                   placeholder="Enter subject..."
                   disabled={isPending || isSuccess}
@@ -260,7 +296,10 @@ export function Compose({ onClose }: { onClose: () => void }) {
                 <Textarea
                   id="body"
                   value={body}
-                  onChange={(e) => setBody(e.target.value)}
+                  onChange={(e) => {
+                    setBody(e.target.value);
+                    updateComposeDraft({ initialBody: e.target.value });
+                  }}
                   required
                   rows={8}
                   placeholder="Write your message here..."

@@ -5,6 +5,7 @@ import type { Label } from "@/lib/validations";
 
 interface UseEmailsOptions {
   label?: Label;
+  maxResults?: number;
   pageToken?: string;
   query?: string;
   from?: string;
@@ -12,6 +13,7 @@ interface UseEmailsOptions {
   subject?: string;
   after?: string;
   before?: string;
+  unread?: boolean;
 }
 
 interface EmailsResponse {
@@ -22,6 +24,7 @@ interface EmailsResponse {
 
 export function useEmails({
   label = "INBOX",
+  maxResults,
   pageToken,
   query,
   from,
@@ -29,10 +32,12 @@ export function useEmails({
   subject,
   after,
   before,
+  unread,
 }: UseEmailsOptions = {}) {
   return useQuery({
     queryKey: queryKeys.emails.list(
       label,
+      maxResults,
       undefined,
       pageToken,
       query,
@@ -40,10 +45,14 @@ export function useEmails({
       to,
       subject,
       after,
-      before
+      before,
+      unread
     ),
     queryFn: async (): Promise<EmailsResponse> => {
       const params = new URLSearchParams({ label });
+      if (maxResults) {
+        params.append("maxResults", maxResults.toString());
+      }
       if (pageToken) {
         params.append("pageToken", pageToken);
       }
@@ -64,6 +73,9 @@ export function useEmails({
       }
       if (before) {
         params.append("before", before);
+      }
+      if (unread !== undefined) {
+        params.append("unread", unread.toString());
       }
       const response = await fetch(`/api/mail/inbox?${params.toString()}`);
       if (!response.ok) {

@@ -1,17 +1,52 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useAssistantStore } from "@/lib/store/assistant-store";
-import { MessageSquare, X, Send, Trash2, Loader2, AlertCircle } from "lucide-react";
+import { useMailStore } from "@/lib/store/mail-store";
+import { mailFilterHref } from "@/lib/mail/filter-url";
+import { useSendEmail } from "@/hooks/mutations/use-send-email";
+import type {
+  AssistantChatMessage,
+  AssistantComposeDraft,
+  AssistantEmailPreview,
+  AssistantUiAction,
+} from "@/lib/assistant/actions";
+import { assistantResponseSchema } from "@/lib/assistant/actions";
+import { assistantRoleSchema, mailRouteSchema, pathForMailRoute } from "@/lib/mail/types";
+import {
+  AlertCircle,
+  Check,
+  Loader2,
+  MailOpen,
+  MessageSquare,
+  Send,
+  Trash2,
+  X,
+} from "lucide-react";
+import {
+  getCurrentView,
+  getOpenEmailId,
+  draftToComposeState,
+  getLatestDraft,
+  formatPreviewDate,
+} from "./assistant-utils";
 
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
+  previews?: AssistantEmailPreview[];
+}
+
+interface PendingApproval {
+  id: string;
+  prompt: string;
+  draft: AssistantComposeDraft;
 }
 
 interface AssistantToggleProps {
@@ -41,19 +76,36 @@ interface AssistantPanelProps {
 }
 
 export function AssistantPanel({ className }: AssistantPanelProps = {}) {
+  const router = useRouter();
+  const pathname = usePathname();
   const { isOpen, closePanel } = useAssistantStore();
+  const filters = useMailStore((state) => state.filters);
+  const setOpenEmailId = useMailStore((state) => state.setOpenEmailId);
+  const setComposeState = useMailStore((state) => state.setComposeState);
+  const { mutate: sendEmail, isPending: isSending } = useSendEmail();
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
+  const [isThinking, setIsThinking] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingApproval, setPendingApproval] = useState<PendingApproval | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const compactHistory = useMemo(
+    () =>
+      messages.slice(-8).map((message) => ({
+        role: message.role,
+        content: message.content,
+      })),
+    [messages]
+  );
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, isTyping]);
+  }, [messages, isThinking, pendingApproval]);
 
   useEffect(() => {
     if (isOpen) {
@@ -61,39 +113,165 @@ export function AssistantPanel({ className }: AssistantPanelProps = {}) {
     }
   }, [isOpen]);
 
-  const handleSendMessage = () => {
-    if (!input.trim()) return;
+  const addAssistantMessage = useCallback((content: string, previews?: AssistantEmailPreview[]) => {
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content,
+        timestamp: new Date(),
+        previews,
+      },
+    ]);
+  }, []);
+
+  const executeActions = useCallback(
+    (actions: AssistantUiAction[]) => {
+      for (const action of actions) {
+        if (action.type === "navigate") {
+          router.push(action.path);
+        }
+
+        if (action.type === "setFilters") {
+          router.push(
+            mailFilterHref(action.view, {
+              search: action.filters.search ?? "",
+              sender: action.filters.sender ?? null,
+              dateFrom: action.filters.dateFrom ?? null,
+              dateTo: action.filters.dateTo ?? null,
+              unread: action.filters.unread ?? null,
+              maxResults: action.filters.maxResults ?? null,
+            })
+          );
+        }
+
+        if (action.type === "clearFilters") {
+          if (action.view) {
+            router.push(pathForMailRoute(action.view));
+          }
+        }
+
+        if (action.type === "openEmail") {
+          setOpenEmailId(action.emailId);
+          router.push(`${pathForMailRoute(action.view)}/${action.emailId}`);
+        }
+
+        if (action.type === "composeDraft") {
+          setComposeState(draftToComposeState(action.draft));
+          router.push(pathForMailRoute(mailRouteSchema.enum.compose));
+
+          if (action.requiresApproval) {
+            setPendingApproval({
+              id: crypto.randomUUID(),
+              prompt: action.approvalPrompt || `Send this email to ${action.draft.to}?`,
+              draft: action.draft,
+            });
+          }
+        }
+      }
+    },
+    [router, setComposeState, setOpenEmailId]
+  );
+
+  const handleSendMessage = useCallback(async () => {
+    const content = input.trim();
+    if (!content || isThinking) return;
 
     const userMessage: Message = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       role: "user",
-      content: input.trim(),
+      content,
       timestamp: new Date(),
     };
+
+    const outgoingMessages: AssistantChatMessage[] = [
+      ...compactHistory,
+      { role: assistantRoleSchema.enum.user, content },
+    ];
 
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setError(null);
-    setIsTyping(true);
+    setIsThinking(true);
 
-    setTimeout(() => {
-      setIsTyping(false);
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: "I understand. I'll help you with that.",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
-    }, 1500);
-  };
+    try {
+      const response = await fetch("/api/assistant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: outgoingMessages,
+          context: {
+            pathname,
+            currentView: getCurrentView(pathname),
+            openEmailId: getOpenEmailId(pathname),
+            filters,
+            currentDate: new Date().toISOString().split("T")[0],
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          },
+        }),
+      });
 
-  const handleClearConversation = () => {
-    setMessages([]);
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.error || "Assistant request failed");
+      }
+
+      const data = assistantResponseSchema.parse(await response.json());
+      addAssistantMessage(data.message, data.previews);
+      executeActions(data.actions || []);
+    } catch (requestError) {
+      const message =
+        requestError instanceof Error ? requestError.message : "Assistant request failed";
+      setError(message);
+    } finally {
+      setIsThinking(false);
+    }
+  }, [addAssistantMessage, compactHistory, executeActions, filters, input, isThinking, pathname]);
+
+  const handleApproveSend = useCallback(() => {
+    if (!pendingApproval) return;
+
+    const draft = getLatestDraft(pendingApproval.draft);
     setError(null);
-  };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+    sendEmail(
+      {
+        to: draft.to,
+        subject: draft.subject,
+        body: draft.body,
+        cc: draft.cc,
+        bcc: draft.bcc,
+        threadId: draft.threadId,
+        inReplyTo: draft.inReplyTo,
+        references: draft.references,
+      },
+      {
+        onSuccess: () => {
+          setPendingApproval(null);
+          setComposeState(null);
+          addAssistantMessage("Approved. I sent the email and moved you to Sent.");
+          router.push(pathForMailRoute(mailRouteSchema.enum.sent));
+        },
+        onError: (sendError) => {
+          setError(sendError instanceof Error ? sendError.message : "Failed to send email");
+        },
+      }
+    );
+  }, [addAssistantMessage, pendingApproval, router, sendEmail, setComposeState]);
+
+  const handleRejectSend = useCallback(() => {
+    setPendingApproval(null);
+    addAssistantMessage("Send cancelled. The draft is still open for editing.");
+  }, [addAssistantMessage]);
+
+  const handleClearConversation = useCallback(() => {
+    setMessages([]);
+    setPendingApproval(null);
+    setError(null);
+  }, []);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
@@ -122,26 +300,24 @@ export function AssistantPanel({ className }: AssistantPanelProps = {}) {
           <div>
             <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">AI Assistant</h3>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              {isTyping ? "Thinking..." : "Ready to help"}
+              {isThinking ? "Planning UI actions..." : "Ready to drive the UI"}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-1">
-          <Button
-            onClick={closePanel}
-            variant="ghost"
-            size="icon-xs"
-            className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50"
-          >
-            <X className="w-4 h-4" />
-          </Button>
-        </div>
+        <Button
+          onClick={closePanel}
+          variant="ghost"
+          size="icon-xs"
+          className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50"
+        >
+          <X className="w-4 h-4" />
+        </Button>
       </div>
 
       <div
         className="overflow-y-auto p-3"
         ref={scrollRef}
-        style={{ height: "calc(100vh - 140px)" }}
+        style={{ height: "calc(100vh - 148px)" }}
       >
         <div className="space-y-4">
           {messages.length === 0 && !error && (
@@ -149,9 +325,11 @@ export function AssistantPanel({ className }: AssistantPanelProps = {}) {
               <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-zinc-100 dark:bg-zinc-800 mb-3">
                 <MessageSquare className="w-6 h-6 text-zinc-400" />
               </div>
-              <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-1">No messages yet</p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-500">
-                Ask me anything about your emails
+              <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-1">
+                Ask me to operate your mailbox
+              </p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-500 max-w-64">
+                Try “show unread emails this week” or “send john@example.com a meeting note”.
               </p>
             </div>
           )}
@@ -159,9 +337,7 @@ export function AssistantPanel({ className }: AssistantPanelProps = {}) {
           {error && (
             <div className="flex items-start gap-3 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30">
               <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-red-900 dark:text-red-200">{error}</p>
-              </div>
+              <p className="text-sm text-red-900 dark:text-red-200">{error}</p>
             </div>
           )}
 
@@ -180,13 +356,39 @@ export function AssistantPanel({ className }: AssistantPanelProps = {}) {
               )}
               <div
                 className={cn(
-                  "max-w-[80%] rounded-xl px-3 py-2.5",
+                  "max-w-[82%] rounded-xl px-3 py-2.5",
                   message.role === "user"
                     ? "bg-gradient-to-br from-emerald-500 to-teal-600 text-white"
                     : "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
                 )}
               >
                 <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+
+                {message.previews && message.previews.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    {message.previews.map((preview) => (
+                      <div
+                        key={preview.id}
+                        className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white/70 dark:bg-zinc-900/60 p-2"
+                      >
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <MailOpen className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                            <p className="text-xs font-medium truncate">{preview.fromName}</p>
+                          </div>
+                          <span className="text-[10px] text-zinc-500 flex-shrink-0">
+                            {formatPreviewDate(preview.date)}
+                          </span>
+                        </div>
+                        <p className="text-xs font-medium truncate">{preview.subject}</p>
+                        <p className="text-[11px] text-zinc-500 dark:text-zinc-400 line-clamp-2 mt-1">
+                          {preview.snippet}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 <p
                   className={cn(
                     "text-[10px] mt-1",
@@ -202,25 +404,50 @@ export function AssistantPanel({ className }: AssistantPanelProps = {}) {
             </div>
           ))}
 
-          {isTyping && (
+          {pendingApproval && (
+            <div className="ml-10 rounded-xl border border-amber-200 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-950/30 p-3">
+              <p className="text-sm font-medium text-amber-950 dark:text-amber-100">
+                {pendingApproval.prompt}
+              </p>
+              <p className="mt-1 text-xs text-amber-800 dark:text-amber-200 break-words">
+                {pendingApproval.draft.subject} → {pendingApproval.draft.to}
+              </p>
+              <div className="mt-3 flex gap-2">
+                <Button
+                  onClick={handleApproveSend}
+                  disabled={isSending}
+                  size="sm"
+                  className="h-8 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 text-xs"
+                >
+                  {isSending ? (
+                    <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                  ) : (
+                    <Check className="w-3.5 h-3.5 mr-1" />
+                  )}
+                  Approve
+                </Button>
+                <Button
+                  onClick={handleRejectSend}
+                  disabled={isSending}
+                  variant="outline"
+                  size="sm"
+                  className="h-8 rounded-lg text-xs"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {isThinking && (
             <div className="flex gap-3 justify-start">
               <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex-shrink-0">
                 <MessageSquare className="w-3.5 h-3.5 text-white" />
               </div>
               <div className="bg-zinc-100 dark:bg-zinc-800 rounded-xl px-3 py-2.5">
                 <div className="flex items-center gap-1">
-                  <div
-                    className="w-2 h-2 rounded-full bg-zinc-400 dark:bg-zinc-500 animate-bounce"
-                    style={{ animationDelay: "0ms" }}
-                  />
-                  <div
-                    className="w-2 h-2 rounded-full bg-zinc-400 dark:bg-zinc-500 animate-bounce"
-                    style={{ animationDelay: "150ms" }}
-                  />
-                  <div
-                    className="w-2 h-2 rounded-full bg-zinc-400 dark:bg-zinc-500 animate-bounce"
-                    style={{ animationDelay: "300ms" }}
-                  />
+                  <Loader2 className="w-4 h-4 animate-spin text-zinc-500" />
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400">Planning</span>
                 </div>
               </div>
             </div>
@@ -234,18 +461,22 @@ export function AssistantPanel({ className }: AssistantPanelProps = {}) {
             ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Type a message..."
+            onKeyDown={handleKeyDown}
+            placeholder="Tell me what to do..."
             className="flex-1 h-9 text-sm"
-            disabled={isTyping}
+            disabled={isThinking}
           />
           <Button
             onClick={handleSendMessage}
-            disabled={!input.trim() || isTyping}
+            disabled={!input.trim() || isThinking}
             size="icon"
             className="h-9 w-9 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700"
           >
-            {isTyping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            {isThinking ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Send className="w-4 h-4" />
+            )}
           </Button>
         </div>
         {messages.length > 0 && (

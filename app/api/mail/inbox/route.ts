@@ -3,6 +3,7 @@ import { requireGmailAuth, handleAuthError } from "@/lib/auth-session";
 import { listEmailsPage } from "@/services/gmail/gmail.service";
 import { createLogger } from "@/lib/logger";
 import { listEmailsQuerySchema } from "@/lib/validations";
+import { z } from "zod";
 
 const logger = createLogger("api:mail:inbox");
 
@@ -15,12 +16,12 @@ export async function GET(request: NextRequest) {
 
     if (!validationResult.success) {
       return NextResponse.json(
-        { error: validationResult.error.flatten().fieldErrors },
+        { error: z.flattenError(validationResult.error).fieldErrors },
         { status: 400 }
       );
     }
 
-    const { label, maxResults, pageToken, query, from, to, subject, after, before } =
+    const { label, maxResults, pageToken, query, from, to, subject, after, before, unread } =
       validationResult.data;
 
     const result = await listEmailsPage(auth, {
@@ -32,6 +33,7 @@ export async function GET(request: NextRequest) {
         subject,
         after,
         before,
+        unread,
       },
       maxResults,
       pageToken,

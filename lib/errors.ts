@@ -2,7 +2,6 @@ export enum ErrorCode {
   AUTHENTICATION_FAILED = "AUTHENTICATION_FAILED",
   AUTHORIZATION_FAILED = "AUTHORIZATION_FAILED",
   NETWORK_ERROR = "NETWORK_ERROR",
-  RATE_LIMIT_EXCEEDED = "RATE_LIMIT_EXCEEDED",
   INVALID_REQUEST = "INVALID_REQUEST",
   RESOURCE_NOT_FOUND = "RESOURCE_NOT_FOUND",
   GMAIL_API_ERROR = "GMAIL_API_ERROR",
@@ -47,14 +46,9 @@ export class AuthorizationError extends AppError {
 }
 
 export class NetworkError extends AppError {
-  constructor(message: string = "Network error", context?: Record<string, unknown>) {
+  constructor(message: string, context?: Record<string, unknown>) {
     super(message, ErrorCode.NETWORK_ERROR, 503, true, context);
-  }
-}
-
-export class RateLimitError extends AppError {
-  constructor(message: string = "Rate limit exceeded", context?: Record<string, unknown>) {
-    super(message, ErrorCode.RATE_LIMIT_EXCEEDED, 429, true, context);
+    this.name = "NetworkError";
   }
 }
 

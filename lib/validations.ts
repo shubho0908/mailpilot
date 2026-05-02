@@ -1,11 +1,16 @@
 import { z } from "zod";
+import { mailLabelSchema, type MailLabel } from "@/lib/mail/types";
 
-const emailSchema = z.string().email();
+const emailSchema = z.email();
 const emailOrArraySchema = z.union([emailSchema, z.array(emailSchema)]);
 
-const labelSchema = z.enum(["INBOX", "SENT"]);
+export type Label = MailLabel;
 
-export type Label = z.infer<typeof labelSchema>;
+const booleanQuerySchema = z.preprocess((value) => {
+  if (value === "true") return true;
+  if (value === "false") return false;
+  return value;
+}, z.boolean());
 
 export const sendEmailSchema = z.object({
   to: emailOrArraySchema,
@@ -22,7 +27,7 @@ export const sendEmailSchema = z.object({
 export type ListEmailsQuery = z.infer<typeof listEmailsQuerySchema>;
 
 export const listEmailsQuerySchema = z.object({
-  label: labelSchema.optional(),
+  label: mailLabelSchema.optional(),
   maxResults: z.coerce.number().optional(),
   pageToken: z.string().optional(),
   query: z.string().optional(),
@@ -31,4 +36,5 @@ export const listEmailsQuerySchema = z.object({
   subject: z.string().optional(),
   after: z.string().optional(),
   before: z.string().optional(),
+  unread: booleanQuerySchema.optional(),
 });

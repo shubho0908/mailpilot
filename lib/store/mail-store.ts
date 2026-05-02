@@ -1,34 +1,35 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
-
-type MailView = "inbox" | "sent" | "compose";
-
-interface MailFilters {
-  search: string;
-  dateFrom: string | null;
-  dateTo: string | null;
-  sender: string | null;
-}
+import {
+  composeModeSchema,
+  emptyMailFilters,
+  mailRouteSchema,
+  type ComposeMode,
+  type MailFilters,
+  type MailRoute,
+} from "@/lib/mail/types";
 
 interface ComposeState {
   initialTo?: string;
+  initialCc?: string;
+  initialBcc?: string;
   initialSubject?: string;
   initialBody?: string;
-  mode?: "compose" | "reply" | "forward";
+  mode?: ComposeMode;
   threadId?: string;
   inReplyTo?: string;
   references?: string[];
 }
 
 interface MailState {
-  currentView: MailView;
+  currentView: MailRoute;
   openEmailId: string | null;
   filters: MailFilters;
   composeState: ComposeState | null;
 }
 
 interface MailActions {
-  setCurrentView: (view: MailView) => void;
+  setCurrentView: (view: MailRoute) => void;
   setOpenEmailId: (id: string | null) => void;
   setFilters: (filters: Partial<MailFilters>) => void;
   clearFilters: () => void;
@@ -49,14 +50,9 @@ interface MailActions {
 type MailStore = MailState & MailActions;
 
 const initialState: MailState = {
-  currentView: "inbox",
+  currentView: mailRouteSchema.enum.inbox,
   openEmailId: null,
-  filters: {
-    search: "",
-    dateFrom: null,
-    dateTo: null,
-    sender: null,
-  },
+  filters: emptyMailFilters,
   composeState: null,
 };
 
@@ -73,16 +69,20 @@ export const useMailStore = create<MailStore>()(
       resetToInbox: () => set(initialState, false, "resetToInbox"),
       setComposeState: (composeState) => set({ composeState }, false, "setComposeState"),
       openCompose: (composeState) =>
-        set({ currentView: "compose", composeState: composeState || null }, false, "openCompose"),
+        set(
+          { currentView: mailRouteSchema.enum.compose, composeState: composeState || null },
+          false,
+          "openCompose"
+        ),
       openReply: (to, subject, body, threadId, inReplyTo, references) =>
         set(
           {
-            currentView: "compose",
+            currentView: mailRouteSchema.enum.compose,
             composeState: {
               initialTo: to,
               initialSubject: subject,
               initialBody: body,
-              mode: "reply",
+              mode: composeModeSchema.enum.reply,
               threadId: threadId,
               inReplyTo: inReplyTo,
               references: references,
@@ -94,8 +94,12 @@ export const useMailStore = create<MailStore>()(
       openForward: (subject, body) =>
         set(
           {
-            currentView: "compose",
-            composeState: { initialSubject: subject, initialBody: body, mode: "forward" },
+            currentView: mailRouteSchema.enum.compose,
+            composeState: {
+              initialSubject: subject,
+              initialBody: body,
+              mode: composeModeSchema.enum.forward,
+            },
           },
           false,
           "openForward"

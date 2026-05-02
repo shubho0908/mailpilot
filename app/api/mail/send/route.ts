@@ -4,6 +4,7 @@ import { sendEmail } from "@/services/gmail/gmail.service";
 import type { SendEmailPayload } from "@/services/gmail/gmail.types";
 import { createLogger } from "@/lib/logger";
 import { sendEmailSchema } from "@/lib/validations";
+import { z } from "zod";
 
 const logger = createLogger("api:mail:send");
 
@@ -14,7 +15,7 @@ export async function POST(request: NextRequest) {
 
     if (!validationResult.success) {
       return NextResponse.json(
-        { error: validationResult.error.flatten().fieldErrors },
+        { error: z.flattenError(validationResult.error).fieldErrors },
         { status: 400 }
       );
     }

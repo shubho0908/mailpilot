@@ -2,6 +2,7 @@
 
 import { EmailDetail } from "./emailDetail";
 import { useRouter, usePathname } from "next/navigation";
+import { mailViewSchema, pathForMailRoute } from "@/lib/mail/types";
 
 interface EmailDetailWrapperProps {
   emailId: string;
@@ -10,14 +11,16 @@ interface EmailDetailWrapperProps {
 export function EmailDetailWrapper({ emailId }: EmailDetailWrapperProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const inboxPath = pathForMailRoute(mailViewSchema.enum.inbox);
+  const sentPath = pathForMailRoute(mailViewSchema.enum.sent);
 
   const handleBack = () => {
-    if (pathname.startsWith("/inbox")) {
-      router.push("/inbox");
-    } else if (pathname.startsWith("/sent")) {
-      router.push("/sent");
+    if (pathname.startsWith(inboxPath)) {
+      router.push(inboxPath);
+    } else if (pathname.startsWith(sentPath)) {
+      router.push(sentPath);
     } else {
-      router.push("/inbox");
+      router.push(inboxPath);
     }
   };
 

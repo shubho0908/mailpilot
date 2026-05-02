@@ -7,12 +7,16 @@ import Link from "next/link";
 import { AssistantToggle } from "./assistantPanel";
 import { useAssistantStore } from "@/lib/store/assistant-store";
 import { cn } from "@/lib/utils";
+import { mailRouteSchema, mailViewSchema, pathForMailRoute } from "@/lib/mail/types";
 
 export function MailNavbar() {
   const pathname = usePathname();
   const { setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const { isOpen } = useAssistantStore();
+  const inboxPath = pathForMailRoute(mailViewSchema.enum.inbox);
+  const sentPath = pathForMailRoute(mailViewSchema.enum.sent);
+  const composePath = pathForMailRoute(mailRouteSchema.enum.compose);
 
   useEffect(() => {
     setMounted(true);
@@ -50,9 +54,9 @@ export function MailNavbar() {
 
         <div className="flex items-center gap-1 flex-1 justify-center">
           <Link
-            href="/inbox"
+            href={inboxPath}
             className={`px-3 py-2 rounded-xl text-sm font-medium tracking-tight transition-all duration-200 cursor-pointer whitespace-nowrap ${
-              pathname === "/inbox" || pathname.startsWith("/inbox/")
+              pathname === inboxPath || pathname.startsWith(`${inboxPath}/`)
                 ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)]"
                 : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
             }`}
@@ -60,9 +64,9 @@ export function MailNavbar() {
             Inbox
           </Link>
           <Link
-            href="/sent"
+            href={sentPath}
             className={`px-3 py-2 rounded-xl text-sm font-medium tracking-tight transition-all duration-200 cursor-pointer whitespace-nowrap ${
-              pathname === "/sent"
+              pathname === sentPath
                 ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)]"
                 : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
             }`}
@@ -112,7 +116,7 @@ export function MailNavbar() {
           <AssistantToggle />
 
           <Link
-            href="/compose"
+            href={composePath}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-500 dark:bg-emerald-600 !text-white text-sm font-medium tracking-tight transition-all duration-200 hover:bg-emerald-600 dark:hover:bg-emerald-700 shadow-[0_1px_3px_-1px_rgba(16,185,129,0.2)] cursor-pointer [&_svg]:text-white"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
