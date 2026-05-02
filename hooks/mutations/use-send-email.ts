@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
+import { toast } from "sonner";
 
 interface SendEmailVariables {
   to: string;
@@ -36,6 +37,10 @@ export function useSendEmail() {
         queryKey: queryKeys.emails.list("SENT"),
         refetchType: "all",
       });
+      toast.success("Email sent successfully");
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Failed to send email");
     },
   });
 }

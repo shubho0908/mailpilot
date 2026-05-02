@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { EmailHtmlFrame } from "./emailHtmlFrame";
+import { DateDisplay } from "@/components/ui/date-display";
 import type { Email } from "@/services/gmail/gmail.types";
 
 interface ThreadMessageCardProps {
@@ -57,7 +58,7 @@ export function ThreadMessageCard({ email, isCurrent }: ThreadMessageCardProps) 
               </p>
             </div>
             <time className="text-xs text-zinc-400 dark:text-zinc-500 sm:text-right">
-              {new Date(email.date).toLocaleString()}
+              <DateDisplay date={email.date} format="string" />
             </time>
           </div>
 

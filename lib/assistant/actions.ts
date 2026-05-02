@@ -15,9 +15,9 @@ export const assistantFiltersSchema = mailFiltersSchema.extend({
 });
 
 export const assistantComposeDraftSchema = z.object({
-  to: z.email(),
-  cc: z.email().optional(),
-  bcc: z.email().optional(),
+  to: z.string().min(1),
+  cc: z.string().optional(),
+  bcc: z.string().optional(),
   subject: z.string().min(1),
   body: z.string().min(1),
   mode: composeModeSchema.default("compose"),
@@ -75,6 +75,12 @@ export const assistantUiActionSchema = z.union([
     requiresApproval: z.boolean(),
     approvalPrompt: z.string().optional(),
   }),
+  z.object({
+    type: z.literal("deleteEmail"),
+    emailId: z.string(),
+    requiresApproval: z.boolean(),
+    approvalPrompt: z.string().optional(),
+  }),
 ]);
 
 export const assistantResponseSchema = z.object({
@@ -112,9 +118,9 @@ export const assistantCommandSchema = z.object({
     z.object({
       type: z.literal("compose"),
       draft: z.object({
-        to: z.email(),
-        cc: z.email().nullable(),
-        bcc: z.email().nullable(),
+        to: z.string().min(1),
+        cc: z.string().nullable(),
+        bcc: z.string().nullable(),
         subject: z.string().min(1),
         body: z.string().min(1),
       }),
@@ -123,6 +129,8 @@ export const assistantCommandSchema = z.object({
     z.object({
       type: z.literal("reply"),
       body: z.string().nullable(),
+      cc: z.string().nullable(),
+      bcc: z.string().nullable(),
       shouldSend: z.boolean().nullable(),
     }),
     z.object({
@@ -135,6 +143,9 @@ export const assistantCommandSchema = z.object({
     }),
     z.object({
       type: z.literal("answer"),
+    }),
+    z.object({
+      type: z.literal("delete"),
     }),
   ]),
 });
@@ -155,7 +166,6 @@ export const assistantRequestSchema = z.object({
 export type AssistantFilters = z.infer<typeof assistantFiltersSchema>;
 export type AssistantComposeDraft = z.infer<typeof assistantComposeDraftSchema>;
 export type AssistantEmailPreview = z.infer<typeof assistantEmailPreviewSchema>;
-export type AssistantOpenEmail = z.infer<typeof assistantOpenEmailSchema>;
 export type AssistantResponse = z.infer<typeof assistantResponseSchema>;
 export type AssistantUiAction = z.infer<typeof assistantUiActionSchema>;
 export type AssistantChatMessage = z.infer<typeof assistantChatMessageSchema>;

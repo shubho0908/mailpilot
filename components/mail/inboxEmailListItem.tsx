@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, useCallback } from "react";
+import { DateDisplay } from "@/components/ui/date-display";
 import type { Email } from "@/services/gmail/gmail.types";
 
 interface EmailListItemProps {
@@ -10,13 +11,13 @@ interface EmailListItemProps {
 }
 
 const EmailListItem = memo(({ email, onClick, index }: EmailListItemProps) => {
-  const handleClick = useCallback(() => {
+  const handleSelectEmail = useCallback(() => {
     onClick(email.id);
   }, [email.id, onClick]);
 
   return (
     <div
-      onClick={handleClick}
+      onClick={handleSelectEmail}
       className="group relative cursor-pointer transition-all duration-300 hover:scale-[1.01] active:scale-[0.99]"
       style={{
         animationDelay: `${index * 30}ms`,
@@ -26,7 +27,7 @@ const EmailListItem = memo(({ email, onClick, index }: EmailListItemProps) => {
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          handleClick();
+          handleSelectEmail();
         }
       }}
     >
@@ -89,7 +90,7 @@ const EmailListItem = memo(({ email, onClick, index }: EmailListItemProps) => {
                     </div>
                   )}
                   <span className="text-xs text-zinc-400 dark:text-zinc-500 whitespace-nowrap tracking-tight">
-                    {new Date(email.date).toLocaleDateString()}
+                    <DateDisplay date={email.date} format="date" />
                   </span>
                 </div>
               </div>

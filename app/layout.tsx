@@ -4,6 +4,7 @@ import "./globals.css";
 import { QueryProvider } from "@/components/providers/queryProvider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AssistantPanel } from "@/components/mail/assistantPanel";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,6 +43,7 @@ export default function RootLayout({
             {children}
             <AssistantPanel />
           </QueryProvider>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

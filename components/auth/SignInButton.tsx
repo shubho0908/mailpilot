@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useTransition } from "react";
 import { createAuthClient } from "better-auth/react";
 import { Button } from "@/components/ui/button";
 
@@ -9,19 +9,15 @@ const authClient = createAuthClient({
 });
 
 export function SignInButton() {
-  const [isPending, setIsPending] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const signIn = async () => {
-    setIsPending(true);
-
-    try {
+    startTransition(async () => {
       await authClient.signIn.social({
         provider: "google",
         callbackURL: "/",
       });
-    } finally {
-      setIsPending(false);
-    }
+    });
   };
 
   return (

@@ -9,6 +9,11 @@ interface EmailPageProps {
   }>;
 }
 
+export const metadata = {
+  title: "Email - MailPilot",
+  description: "View email details with AI assistance.",
+};
+
 export default async function EmailPage({ params }: EmailPageProps) {
   const session = await getCurrentSession();
 

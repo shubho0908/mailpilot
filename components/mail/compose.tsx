@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useReducer, useCallback } from "react";
 import { useSendEmail } from "@/hooks/mutations/use-send-email";
 import { useMailStore } from "@/lib/store/mail-store";
 import { Input } from "@/components/ui/input";
@@ -8,33 +8,85 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 
+interface ComposeState {
+  to: string;
+  cc: string;
+  bcc: string;
+  subject: string;
+  body: string;
+  showCcBcc: boolean;
+}
+
+type ComposeAction =
+  | { type: "SET_TO"; value: string }
+  | { type: "SET_CC"; value: string }
+  | { type: "SET_BCC"; value: string }
+  | { type: "SET_SUBJECT"; value: string }
+  | { type: "SET_BODY"; value: string }
+  | { type: "TOGGLE_CC_BCC" }
+  | { type: "RESET" };
+
+function composeReducer(state: ComposeState, action: ComposeAction): ComposeState {
+  switch (action.type) {
+    case "SET_TO":
+      return { ...state, to: action.value };
+    case "SET_CC":
+      return { ...state, cc: action.value };
+    case "SET_BCC":
+      return { ...state, bcc: action.value };
+    case "SET_SUBJECT":
+      return { ...state, subject: action.value };
+    case "SET_BODY":
+      return { ...state, body: action.value };
+    case "TOGGLE_CC_BCC":
+      return { ...state, showCcBcc: !state.showCcBcc };
+    case "RESET":
+      return { ...state, to: "", cc: "", bcc: "", subject: "", body: "" };
+    default:
+      return state;
+  }
+}
+
+function ComposeHeader({ mode, onCancel }: { mode: string; onCancel: () => void }) {
+  return (
+    <div className="mb-6 sm:mb-8">
+      <div className="flex items-center justify-between mb-4 sm:mb-6">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl tracking-tighter leading-none text-zinc-900 dark:text-zinc-50">
+          {mode === "forward" ? "Forward" : mode === "reply" ? "Reply" : "Compose"}
+        </h1>
+        <Button
+          onClick={onCancel}
+          variant="ghost"
+          className="rounded-lg px-3 sm:px-5 transition-all duration-300 hover:scale-105 active:scale-95 text-xs sm:text-sm"
+        >
+          Cancel
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export function Compose({ onClose }: { onClose: () => void }) {
   const composeState = useMailStore((state) => state.composeState);
   const setComposeState = useMailStore((state) => state.setComposeState);
 
-  const [to, setTo] = useState(composeState?.initialTo || "");
-  const [cc, setCc] = useState(composeState?.initialCc || "");
-  const [bcc, setBcc] = useState(composeState?.initialBcc || "");
-  const [subject, setSubject] = useState(composeState?.initialSubject || "");
-  const [body, setBody] = useState(composeState?.initialBody || "");
-  const [showCcBcc, setShowCcBcc] = useState(false);
   const mode = composeState?.mode || "compose";
   const threadId = composeState?.threadId;
   const inReplyTo = composeState?.inReplyTo;
   const references = composeState?.references;
 
-  const { mutate: sendEmail, isPending, error, isSuccess } = useSendEmail();
+  const [state, dispatch] = useReducer(composeReducer, {
+    to: composeState?.initialTo || "",
+    cc: composeState?.initialCc || "",
+    bcc: composeState?.initialBcc || "",
+    subject: composeState?.initialSubject || "",
+    body: composeState?.initialBody || "",
+    showCcBcc: Boolean(composeState?.initialCc || composeState?.initialBcc),
+  });
 
-  useEffect(() => {
-    if (composeState) {
-      setTo(composeState.initialTo || "");
-      setCc(composeState.initialCc || "");
-      setBcc(composeState.initialBcc || "");
-      setSubject(composeState.initialSubject || "");
-      setBody(composeState.initialBody || "");
-      setShowCcBcc(Boolean(composeState.initialCc || composeState.initialBcc));
-    }
-  }, [composeState]);
+  const { to, cc, bcc, subject, body, showCcBcc } = state;
+
+  const { mutate: sendEmail, isPending, isSuccess } = useSendEmail();
 
   const updateComposeDraft = useCallback(
     (updates: {
@@ -73,15 +125,9 @@ export function Compose({ onClose }: { onClose: () => void }) {
         },
         {
           onSuccess: () => {
-            setTo("");
-            setCc("");
-            setBcc("");
-            setSubject("");
-            setBody("");
+            dispatch({ type: "RESET" });
             setComposeState(null);
-            setTimeout(() => {
-              onClose();
-            }, 1500);
+            onClose();
           },
         }
       );
@@ -109,83 +155,10 @@ export function Compose({ onClose }: { onClose: () => void }) {
   return (
     <div className="py-6 sm:py-8">
       <div className="max-w-5xl mx-auto px-2 sm:px-0">
-        <div className="mb-6 sm:mb-8">
-          <div className="flex items-center justify-between mb-4 sm:mb-6">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl tracking-tighter leading-none text-zinc-900 dark:text-zinc-50">
-              {mode === "forward" ? "Forward" : mode === "reply" ? "Reply" : "Compose"}
-            </h1>
-            <Button
-              onClick={handleCancel}
-              variant="ghost"
-              className="rounded-lg px-3 sm:px-5 transition-all duration-300 hover:scale-105 active:scale-95 text-xs sm:text-sm"
-            >
-              Cancel
-            </Button>
-          </div>
-        </div>
+        <ComposeHeader mode={mode} onCancel={handleCancel} />
 
         <div className="relative bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl rounded-xl p-0.5 ring-1 ring-black/[0.02] dark:ring-white/[0.05] shadow-[0_2px_8px_-1px_rgba(0,0,0,0.04),0_1px_4px_-1px_rgba(0,0,0,0.03)] dark:shadow-[0_2px_8px_-1px_rgba(0,0,0,0.3),0_1px_4px_-1px_rgba(0,0,0,0.2)]">
           <div className="bg-white dark:bg-zinc-900 rounded-lg p-4 sm:p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]">
-            {isSuccess && (
-              <div className="mb-4 sm:mb-6 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 p-3 sm:p-4">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-emerald-500 flex items-center justify-center flex-shrink-0">
-                    <svg
-                      className="h-4 w-4 sm:h-5 sm:w-5 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-semibold text-emerald-900 dark:text-emerald-100 text-xs sm:text-sm tracking-tight">
-                      Email sent successfully
-                    </p>
-                    <p className="text-xs sm:text-sm text-emerald-700 dark:text-emerald-300">
-                      Your message has been delivered
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {error && (
-              <div className="mb-4 sm:mb-6 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3 sm:p-4">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-red-500 flex items-center justify-center flex-shrink-0">
-                    <svg
-                      className="h-4 w-4 sm:h-5 sm:w-5 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-semibold text-red-900 dark:text-red-100 text-xs sm:text-sm tracking-tight">
-                      Failed to send email
-                    </p>
-                    <p className="text-xs sm:text-sm text-red-700 dark:text-red-300 break-words">
-                      {error.message}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
             <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
               <div className="space-y-1.5 sm:space-y-2">
                 <Label
@@ -199,7 +172,7 @@ export function Compose({ onClose }: { onClose: () => void }) {
                   type="email"
                   value={to}
                   onChange={(e) => {
-                    setTo(e.target.value);
+                    dispatch({ type: "SET_TO", value: e.target.value });
                     updateComposeDraft({ initialTo: e.target.value });
                   }}
                   required
@@ -213,7 +186,7 @@ export function Compose({ onClose }: { onClose: () => void }) {
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={() => setShowCcBcc(!showCcBcc)}
+                onClick={() => dispatch({ type: "TOGGLE_CC_BCC" })}
                 className="h-8 sm:h-9 px-3 sm:px-4 text-xs text-zinc-500 dark:text-zinc-400 rounded-lg transition-all duration-300 hover:scale-105 active:scale-95"
               >
                 {showCcBcc ? "Hide" : "Show"} Cc & Bcc
@@ -233,7 +206,7 @@ export function Compose({ onClose }: { onClose: () => void }) {
                       type="email"
                       value={cc}
                       onChange={(e) => {
-                        setCc(e.target.value);
+                        dispatch({ type: "SET_CC", value: e.target.value });
                         updateComposeDraft({ initialCc: e.target.value });
                       }}
                       placeholder="cc@example.com"
@@ -253,7 +226,7 @@ export function Compose({ onClose }: { onClose: () => void }) {
                       type="email"
                       value={bcc}
                       onChange={(e) => {
-                        setBcc(e.target.value);
+                        dispatch({ type: "SET_BCC", value: e.target.value });
                         updateComposeDraft({ initialBcc: e.target.value });
                       }}
                       placeholder="bcc@example.com"
@@ -276,7 +249,7 @@ export function Compose({ onClose }: { onClose: () => void }) {
                   type="text"
                   value={subject}
                   onChange={(e) => {
-                    setSubject(e.target.value);
+                    dispatch({ type: "SET_SUBJECT", value: e.target.value });
                     updateComposeDraft({ initialSubject: e.target.value });
                   }}
                   required
@@ -297,7 +270,7 @@ export function Compose({ onClose }: { onClose: () => void }) {
                   id="body"
                   value={body}
                   onChange={(e) => {
-                    setBody(e.target.value);
+                    dispatch({ type: "SET_BODY", value: e.target.value });
                     updateComposeDraft({ initialBody: e.target.value });
                   }}
                   required

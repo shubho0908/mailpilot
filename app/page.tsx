@@ -4,6 +4,11 @@ import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
+export const metadata = {
+  title: "MailPilot - AI-Powered Email Management",
+  description: "Sign in to read and compose mail from your Google account with AI assistance.",
+};
+
 export default async function Home() {
   const session = await getCurrentSession();
 

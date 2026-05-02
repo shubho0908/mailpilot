@@ -18,7 +18,6 @@ export type MailLabel = z.infer<typeof mailLabelSchema>;
 export type MailView = z.infer<typeof mailViewSchema>;
 export type MailRoute = z.infer<typeof mailRouteSchema>;
 export type ComposeMode = z.infer<typeof composeModeSchema>;
-export type AssistantRole = z.infer<typeof assistantRoleSchema>;
 export type MailFilters = z.infer<typeof mailFiltersSchema>;
 
 export const emptyMailFilters: MailFilters = {

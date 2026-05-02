@@ -5,6 +5,11 @@ import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
+export const metadata = {
+  title: "Inbox - MailPilot",
+  description: "View and manage your email inbox with AI assistance.",
+};
+
 export default async function InboxPage() {
   const session = await getCurrentSession();
 

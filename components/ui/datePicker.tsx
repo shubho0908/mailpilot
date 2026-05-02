@@ -74,7 +74,7 @@ export function DatePicker({
           className
         )}
       >
-        <span className="min-w-0 truncate">{date ? date.toLocaleDateString() : placeholder}</span>
+        <span className="min-w-0 truncate">{date ? formatLocalDate(date) : placeholder}</span>
         <CalendarIcon className="size-4 shrink-0 opacity-50" aria-hidden="true" />
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start" sideOffset={6}>

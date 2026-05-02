@@ -6,10 +6,11 @@ import { useRouter } from "next/navigation";
 
 export default function ComposePage() {
   const router = useRouter();
+  const { back } = router;
 
   return (
     <MailLayout>
-      <Compose onClose={() => router.back()} />
+      <Compose onClose={() => back()} />
     </MailLayout>
   );
 }

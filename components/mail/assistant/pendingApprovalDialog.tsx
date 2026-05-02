@@ -6,7 +6,8 @@ interface PendingApprovalDialogProps {
   pendingApproval: {
     id: string;
     prompt: string;
-    draft: AssistantComposeDraft;
+    draft?: AssistantComposeDraft;
+    deleteEmailId?: string;
   };
   isSending: boolean;
   onApprove: () => void;
@@ -24,9 +25,16 @@ export function PendingApprovalDialog({
       <p className="text-sm font-medium text-amber-950 dark:text-amber-100">
         {pendingApproval.prompt}
       </p>
-      <p className="mt-1 text-xs text-amber-800 dark:text-amber-200 break-words">
-        {pendingApproval.draft.subject} → {pendingApproval.draft.to}
-      </p>
+      {pendingApproval.draft && (
+        <p className="mt-1 text-xs text-amber-800 dark:text-amber-200 break-words">
+          {pendingApproval.draft.subject} → {pendingApproval.draft.to}
+        </p>
+      )}
+      {pendingApproval.deleteEmailId && (
+        <p className="mt-1 text-xs text-amber-800 dark:text-amber-200 break-words">
+          This action cannot be undone
+        </p>
+      )}
       <div className="mt-3 flex gap-2">
         <Button
           onClick={onApprove}

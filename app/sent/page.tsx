@@ -5,6 +5,11 @@ import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
+export const metadata = {
+  title: "Sent - MailPilot",
+  description: "View your sent emails with AI assistance.",
+};
+
 export default async function SentPage() {
   const session = await getCurrentSession();
 

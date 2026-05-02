@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef } from "react";
 
 const EMAIL_FRAME_HEAD = `<base target="_blank" />
 <style>
@@ -63,46 +63,19 @@ interface EmailHtmlFrameProps {
 
 export function EmailHtmlFrame({ html, title }: EmailHtmlFrameProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const resizeObserverRef = useRef<ResizeObserver | null>(null);
-  const [height, setHeight] = useState(320);
 
   const srcDoc = useMemo(() => buildEmailFrameDocument(html), [html]);
-
-  const updateHeight = useCallback(() => {
-    const frameDocument = iframeRef.current?.contentDocument;
-    if (!frameDocument) return;
-
-    const nextHeight = Math.max(
-      frameDocument.body.scrollHeight,
-      frameDocument.documentElement.scrollHeight,
-      240
-    );
-    setHeight(nextHeight);
-  }, []);
 
   const handleLoad = useCallback(() => {
     const frameDocument = iframeRef.current?.contentDocument;
     if (!frameDocument) return;
 
-    resizeObserverRef.current?.disconnect();
-    updateHeight();
-
-    const resizeObserver = new ResizeObserver(updateHeight);
-    resizeObserverRef.current = resizeObserver;
-    resizeObserver.observe(frameDocument.documentElement);
+    // Enable scrolling within the iframe for long content
+    frameDocument.documentElement.style.overflowY = "auto";
     if (frameDocument.body) {
-      resizeObserver.observe(frameDocument.body);
+      frameDocument.body.style.overflowY = "auto";
     }
-
-    const images = Array.from(frameDocument.images);
-    images.forEach((image) => {
-      image.addEventListener("load", updateHeight, { once: true });
-      image.addEventListener("error", updateHeight, { once: true });
-    });
-
-    window.setTimeout(updateHeight, 250);
-    window.setTimeout(updateHeight, 1000);
-  }, [updateHeight]);
+  }, []);
 
   return (
     <iframe
@@ -112,7 +85,7 @@ export function EmailHtmlFrame({ html, title }: EmailHtmlFrameProps) {
       onLoad={handleLoad}
       sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin"
       className="block w-full border-0 bg-white"
-      style={{ height }}
+      style={{ height: "400px" }}
     />
   );
 }

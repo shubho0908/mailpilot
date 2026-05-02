@@ -1,26 +1,24 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useReducer, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useAssistantStore } from "@/lib/store/assistant-store";
 import { useMailStore } from "@/lib/store/mail-store";
 import { mailFilterHref } from "@/lib/mail/filter-url";
 import { queryKeys } from "@/lib/query-keys";
 import { useSendEmail } from "@/hooks/mutations/use-send-email";
+import { useDeleteEmail } from "@/hooks/mutations/use-delete-email";
 import type {
   AssistantChatMessage,
-  AssistantComposeDraft,
   AssistantEmailPreview,
   AssistantUiAction,
 } from "@/lib/assistant/actions";
 import { assistantResponseSchema } from "@/lib/assistant/actions";
 import { assistantRoleSchema, mailRouteSchema, pathForMailRoute } from "@/lib/mail/types";
 import type { Email } from "@/services/gmail/gmail.types";
-import { AlertCircle, Loader2, MessageSquare, Send, Trash2, X } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import {
   getCurrentView,
   getOpenEmailId,
@@ -28,22 +26,13 @@ import {
   getLatestDraft,
 } from "./assistant-utils";
 import { toAssistantOpenEmail } from "@/lib/assistant/email-transformers";
-import { MessageListItem } from "./assistant/messageListItem";
-import { PendingApprovalDialog } from "./assistant/pendingApprovalDialog";
-
-interface Message {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  timestamp: Date;
-  previews?: AssistantEmailPreview[];
-}
-
-interface PendingApproval {
-  id: string;
-  prompt: string;
-  draft: AssistantComposeDraft;
-}
+import { AssistantPanelHeader } from "./assistant/assistantPanelHeader";
+import { AssistantPanelFooter } from "./assistant/assistantPanelFooter";
+import {
+  AssistantPanelMessagesList,
+  type Message,
+  type PendingApproval,
+} from "./assistant/assistantPanelMessagesList";
 
 interface AssistantToggleProps {
   className?: string;
@@ -67,27 +56,73 @@ export function AssistantToggle({ className }: AssistantToggleProps = {}) {
   );
 }
 
+interface AssistantPanelState {
+  messages: Message[];
+  input: string;
+  isThinking: boolean;
+  error: string | null;
+  pendingApproval: PendingApproval | null;
+}
+
+type AssistantPanelAction =
+  | { type: "SET_MESSAGES"; value: Message[] }
+  | { type: "ADD_MESSAGE"; value: Message }
+  | { type: "SET_INPUT"; value: string }
+  | { type: "SET_THINKING"; value: boolean }
+  | { type: "SET_ERROR"; value: string | null }
+  | { type: "SET_PENDING_APPROVAL"; value: PendingApproval | null }
+  | { type: "RESET" };
+
+function assistantPanelReducer(
+  state: AssistantPanelState,
+  action: AssistantPanelAction
+): AssistantPanelState {
+  switch (action.type) {
+    case "SET_MESSAGES":
+      return { ...state, messages: action.value };
+    case "ADD_MESSAGE":
+      return { ...state, messages: [...state.messages, action.value] };
+    case "SET_INPUT":
+      return { ...state, input: action.value };
+    case "SET_THINKING":
+      return { ...state, isThinking: action.value };
+    case "SET_ERROR":
+      return { ...state, error: action.value };
+    case "SET_PENDING_APPROVAL":
+      return { ...state, pendingApproval: action.value };
+    case "RESET":
+      return { ...state, messages: [], input: "", error: null, pendingApproval: null };
+    default:
+      return state;
+  }
+}
+
 interface AssistantPanelProps {
   className?: string;
 }
 
 export function AssistantPanel({ className }: AssistantPanelProps = {}) {
   const router = useRouter();
+  const { push } = router;
   const pathname = usePathname();
   const queryClient = useQueryClient();
   const { isOpen, closePanel } = useAssistantStore();
   const filters = useMailStore((state) => state.filters);
   const setOpenEmailId = useMailStore((state) => state.setOpenEmailId);
   const setComposeState = useMailStore((state) => state.setComposeState);
-  const { mutate: sendEmail, isPending: isSending } = useSendEmail();
+  const { mutate: sendEmail } = useSendEmail();
+  const { mutate: deleteEmail } = useDeleteEmail();
 
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
-  const [isThinking, setIsThinking] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [pendingApproval, setPendingApproval] = useState<PendingApproval | null>(null);
+  const [state, dispatch] = useReducer(assistantPanelReducer, {
+    messages: [],
+    input: "",
+    isThinking: false,
+    error: null,
+    pendingApproval: null,
+  });
+
+  const { messages, input, isThinking, error, pendingApproval } = state;
   const scrollRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const compactHistory = useMemo(
     () =>
@@ -104,34 +139,28 @@ export function AssistantPanel({ className }: AssistantPanelProps = {}) {
     }
   }, [messages, isThinking, pendingApproval]);
 
-  useEffect(() => {
-    if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 300);
-    }
-  }, [isOpen]);
-
   const addAssistantMessage = useCallback((content: string, previews?: AssistantEmailPreview[]) => {
-    setMessages((prev) => [
-      ...prev,
-      {
+    dispatch({
+      type: "ADD_MESSAGE",
+      value: {
         id: crypto.randomUUID(),
         role: "assistant",
         content,
         timestamp: new Date(),
         previews,
       },
-    ]);
+    });
   }, []);
 
   const executeActions = useCallback(
     (actions: AssistantUiAction[]) => {
       for (const action of actions) {
         if (action.type === "navigate") {
-          router.push(action.path);
+          push(action.path);
         }
 
         if (action.type === "setFilters") {
-          router.push(
+          push(
             mailFilterHref(action.view, {
               search: action.filters.search ?? "",
               sender: action.filters.sender ?? null,
@@ -145,30 +174,63 @@ export function AssistantPanel({ className }: AssistantPanelProps = {}) {
 
         if (action.type === "clearFilters") {
           if (action.view) {
-            router.push(pathForMailRoute(action.view));
+            push(pathForMailRoute(action.view));
           }
         }
 
         if (action.type === "openEmail") {
           setOpenEmailId(action.emailId);
-          router.push(`${pathForMailRoute(action.view)}/${action.emailId}`);
+          push(`${pathForMailRoute(action.view)}/${action.emailId}`);
         }
 
         if (action.type === "composeDraft") {
           setComposeState(draftToComposeState(action.draft));
-          router.push(pathForMailRoute(mailRouteSchema.enum.compose));
+          push(pathForMailRoute(mailRouteSchema.enum.compose));
 
           if (action.requiresApproval) {
-            setPendingApproval({
-              id: crypto.randomUUID(),
-              prompt: action.approvalPrompt || `Send this email to ${action.draft.to}?`,
-              draft: action.draft,
+            dispatch({
+              type: "SET_PENDING_APPROVAL",
+              value: {
+                id: crypto.randomUUID(),
+                prompt: action.approvalPrompt || `Send this email to ${action.draft.to}?`,
+                draft: action.draft,
+              },
             });
+          }
+        }
+
+        if (action.type === "deleteEmail") {
+          if (action.requiresApproval) {
+            dispatch({
+              type: "SET_PENDING_APPROVAL",
+              value: {
+                id: crypto.randomUUID(),
+                prompt: action.approvalPrompt || "Delete this email?",
+                deleteEmailId: action.emailId,
+              },
+            });
+          } else {
+            deleteEmail(
+              { id: action.emailId },
+              {
+                onSuccess: () => {
+                  addAssistantMessage("Email deleted successfully.");
+                  push(pathForMailRoute(mailRouteSchema.enum.inbox));
+                },
+                onError: (deleteError) => {
+                  dispatch({
+                    type: "SET_ERROR",
+                    value:
+                      deleteError instanceof Error ? deleteError.message : "Failed to delete email",
+                  });
+                },
+              }
+            );
           }
         }
       }
     },
-    [router, setComposeState, setOpenEmailId]
+    [push, setComposeState, setOpenEmailId, deleteEmail, addAssistantMessage]
   );
 
   const handleSendMessage = useCallback(async () => {
@@ -187,10 +249,13 @@ export function AssistantPanel({ className }: AssistantPanelProps = {}) {
       { role: assistantRoleSchema.enum.user, content },
     ];
 
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-    setError(null);
-    setIsThinking(true);
+    dispatch({
+      type: "ADD_MESSAGE",
+      value: userMessage,
+    });
+    dispatch({ type: "SET_INPUT", value: "" });
+    dispatch({ type: "SET_ERROR", value: null });
+    dispatch({ type: "SET_THINKING", value: true });
 
     try {
       const openEmailId = getOpenEmailId(pathname);
@@ -242,9 +307,9 @@ export function AssistantPanel({ className }: AssistantPanelProps = {}) {
     } catch (requestError) {
       const message =
         requestError instanceof Error ? requestError.message : "Assistant request failed";
-      setError(message);
+      dispatch({ type: "SET_ERROR", value: message });
     } finally {
-      setIsThinking(false);
+      dispatch({ type: "SET_THINKING", value: false });
     }
   }, [
     addAssistantMessage,
@@ -260,43 +325,68 @@ export function AssistantPanel({ className }: AssistantPanelProps = {}) {
   const handleApproveSend = useCallback(() => {
     if (!pendingApproval) return;
 
-    const draft = getLatestDraft(pendingApproval.draft);
-    setError(null);
+    dispatch({ type: "SET_ERROR", value: null });
 
-    sendEmail(
-      {
-        to: draft.to,
-        subject: draft.subject,
-        body: draft.body,
-        cc: draft.cc,
-        bcc: draft.bcc,
-        threadId: draft.threadId,
-        inReplyTo: draft.inReplyTo,
-        references: draft.references,
-      },
-      {
-        onSuccess: () => {
-          setPendingApproval(null);
-          setComposeState(null);
-          addAssistantMessage("Approved. I sent the email and moved you to Sent.");
-          router.push(pathForMailRoute(mailRouteSchema.enum.sent));
+    if (pendingApproval.deleteEmailId) {
+      deleteEmail(
+        { id: pendingApproval.deleteEmailId },
+        {
+          onSuccess: () => {
+            dispatch({ type: "SET_PENDING_APPROVAL", value: null });
+            push(pathForMailRoute(mailRouteSchema.enum.inbox));
+          },
+          onError: (deleteError) => {
+            dispatch({
+              type: "SET_ERROR",
+              value: deleteError instanceof Error ? deleteError.message : "Failed to delete email",
+            });
+          },
+        }
+      );
+    } else if (pendingApproval.draft) {
+      const draft = getLatestDraft(pendingApproval.draft);
+      sendEmail(
+        {
+          to: draft.to,
+          subject: draft.subject,
+          body: draft.body,
+          cc: draft.cc,
+          bcc: draft.bcc,
+          threadId: draft.threadId,
+          inReplyTo: draft.inReplyTo,
+          references: draft.references,
         },
-        onError: (sendError) => {
-          setError(sendError instanceof Error ? sendError.message : "Failed to send email");
-        },
-      }
-    );
-  }, [addAssistantMessage, pendingApproval, router, sendEmail, setComposeState]);
+        {
+          onSuccess: () => {
+            dispatch({ type: "SET_PENDING_APPROVAL", value: null });
+            setComposeState(null);
+            push(pathForMailRoute(mailRouteSchema.enum.sent));
+          },
+          onError: (sendError) => {
+            dispatch({
+              type: "SET_ERROR",
+              value: sendError instanceof Error ? sendError.message : "Failed to send email",
+            });
+          },
+        }
+      );
+    }
+  }, [pendingApproval, push, sendEmail, setComposeState, deleteEmail]);
 
   const handleRejectSend = useCallback(() => {
-    setPendingApproval(null);
-    addAssistantMessage("Send cancelled. The draft is still open for editing.");
-  }, [addAssistantMessage]);
+    if (!pendingApproval) return;
+    dispatch({ type: "SET_PENDING_APPROVAL", value: null });
+    if (pendingApproval.deleteEmailId) {
+      addAssistantMessage("Delete cancelled. The email was not deleted.");
+    } else {
+      addAssistantMessage("Send cancelled. The draft is still open for editing.");
+    }
+  }, [addAssistantMessage, pendingApproval]);
 
   const handleClearConversation = useCallback(() => {
-    setMessages([]);
-    setPendingApproval(null);
-    setError(null);
+    dispatch({ type: "SET_MESSAGES", value: [] });
+    dispatch({ type: "SET_PENDING_APPROVAL", value: null });
+    dispatch({ type: "SET_ERROR", value: null });
   }, []);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -320,125 +410,32 @@ export function AssistantPanel({ className }: AssistantPanelProps = {}) {
       )}
       style={{ width: "400px", maxWidth: "calc(100vw - 2rem)" }}
     >
-      <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-200/50 dark:border-zinc-800/50">
-        <div className="flex items-center gap-2">
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 shadow-[0_2px_8px_-1px_rgba(16,185,129,0.15)]">
-            <MessageSquare className="w-4 h-4 text-white" />
-          </div>
-          <div>
-            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">AI Assistant</h3>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              {isThinking ? "Planning UI actions..." : "Ready to drive the UI"}
-            </p>
-          </div>
-        </div>
-        <Button
-          onClick={closePanel}
-          variant="ghost"
-          size="icon-xs"
-          className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50"
-        >
-          <X className="w-4 h-4" />
-        </Button>
-      </div>
+      <AssistantPanelHeader onClose={closePanel} isThinking={isThinking} />
 
       <div
         className="overflow-y-auto p-3"
         ref={scrollRef}
         style={{ height: "calc(100vh - 148px)" }}
       >
-        <div className="space-y-4">
-          {messages.length === 0 && !error && (
-            <div className="flex flex-col items-center justify-center py-6 text-center">
-              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-zinc-100 dark:bg-zinc-800 mb-3">
-                <MessageSquare className="w-6 h-6 text-zinc-400" />
-              </div>
-              <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-1">
-                Ask me to operate your mailbox
-              </p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-500 max-w-64">
-                Try “show unread emails this week” or “send john@example.com a meeting note”.
-              </p>
-            </div>
-          )}
-
-          {error && (
-            <div className="flex items-start gap-3 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30">
-              <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-red-900 dark:text-red-200">{error}</p>
-            </div>
-          )}
-
-          {messages.map((message) => (
-            <MessageListItem key={message.id} message={message} />
-          ))}
-
-          {pendingApproval && (
-            <PendingApprovalDialog
-              pendingApproval={pendingApproval}
-              isSending={isSending}
-              onApprove={handleApproveSend}
-              onReject={handleRejectSend}
-            />
-          )}
-
-          {isThinking && (
-            <div className="flex gap-3 justify-start">
-              <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex-shrink-0">
-                <MessageSquare className="w-3.5 h-3.5 text-white" />
-              </div>
-              <div className="bg-zinc-100 dark:bg-zinc-800 rounded-xl px-3 py-2.5">
-                <div className="flex items-center gap-1">
-                  <Loader2 className="w-4 h-4 animate-spin text-zinc-500" />
-                  <span className="text-xs text-zinc-500 dark:text-zinc-400">Planning</span>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+        <AssistantPanelMessagesList
+          messages={messages}
+          error={error}
+          pendingApproval={pendingApproval}
+          isThinking={isThinking}
+          onApproveSend={handleApproveSend}
+          onRejectSend={handleRejectSend}
+        />
       </div>
 
-      <div className="p-4 border-t border-zinc-200/50 dark:border-zinc-800/50">
-        <div className="flex items-center gap-2">
-          <Input
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Tell me what to do..."
-            className="flex-1 h-9 text-sm"
-            disabled={isThinking}
-          />
-          <Button
-            onClick={handleSendMessage}
-            disabled={!input.trim() || isThinking}
-            size="icon"
-            className="h-9 w-9 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700"
-          >
-            {isThinking ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Send className="w-4 h-4" />
-            )}
-          </Button>
-        </div>
-        {messages.length > 0 && (
-          <div className="mt-3 flex items-center justify-between">
-            <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
-              {messages.length} message{messages.length !== 1 ? "s" : ""}
-            </p>
-            <Button
-              onClick={handleClearConversation}
-              variant="ghost"
-              size="xs"
-              className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50"
-            >
-              <Trash2 className="w-3 h-3 mr-1" />
-              Clear
-            </Button>
-          </div>
-        )}
-      </div>
+      <AssistantPanelFooter
+        messages={messages}
+        input={input}
+        onKeyDown={handleKeyDown}
+        isThinking={isThinking}
+        onSendMessage={handleSendMessage}
+        onInputChange={(value: string) => dispatch({ type: "SET_INPUT", value })}
+        onClearConversation={handleClearConversation}
+      />
     </div>
   );
 }

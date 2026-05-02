@@ -4,9 +4,9 @@ import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useEmailThread } from "@/hooks/queries/use-email-thread";
 import { useMailStore } from "@/lib/store/mail-store";
+import { useDeleteEmail } from "@/hooks/mutations/use-delete-email";
 import { composeModeSchema, mailRouteSchema, pathForMailRoute } from "@/lib/mail/types";
 import { plainTextFromEmail, replyHeadersForEmail } from "@/lib/mail/email-utils";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { EmailHeader } from "./emailHeader";
 import { ThreadMessageCard } from "./threadMessageCard";
@@ -19,8 +19,10 @@ interface EmailDetailProps {
 
 export function EmailDetail({ emailId, onBack }: EmailDetailProps) {
   const router = useRouter();
+  const { push } = router;
   const { data, isLoading, error, refetch } = useEmailThread(emailId);
   const { setComposeState } = useMailStore();
+  const { mutate: deleteEmail } = useDeleteEmail();
   const email = data?.email;
   const threadMessages = data?.thread.messages.length ? data.thread.messages : email ? [email] : [];
   const replyTarget = threadMessages[threadMessages.length - 1] || email;
@@ -46,8 +48,8 @@ export function EmailDetail({ emailId, onBack }: EmailDetailProps) {
       inReplyTo: replyHeaders.inReplyTo,
       references: replyHeaders.references,
     });
-    router.push(pathForMailRoute(mailRouteSchema.enum.compose));
-  }, [replyTarget, setComposeState, router]);
+    push(pathForMailRoute(mailRouteSchema.enum.compose));
+  }, [replyTarget, setComposeState, push]);
 
   const handleForward = useCallback(() => {
     if (!email) return;
@@ -58,8 +60,20 @@ export function EmailDetail({ emailId, onBack }: EmailDetailProps) {
       initialBody: body,
       mode: composeModeSchema.enum.forward,
     });
-    router.push(pathForMailRoute(mailRouteSchema.enum.compose));
-  }, [email, setComposeState, router]);
+    push(pathForMailRoute(mailRouteSchema.enum.compose));
+  }, [email, setComposeState, push]);
+
+  const handleDelete = useCallback(() => {
+    if (!email) return;
+    deleteEmail(
+      { id: email.id },
+      {
+        onSuccess: () => {
+          onBack();
+        },
+      }
+    );
+  }, [email, deleteEmail, onBack]);
 
   if (isLoading) {
     return <EmailDetailLoading onBack={onBack} />;
@@ -91,10 +105,11 @@ export function EmailDetail({ emailId, onBack }: EmailDetailProps) {
               threadMessages={threadMessages}
               onReply={handleReply}
               onForward={handleForward}
+              onDelete={handleDelete}
             />
 
-            <ScrollArea className="h-[420px] sm:h-[520px]">
-              <div className="space-y-3 pr-2">
+            <div className="min-h-[200px] max-h-[600px] overflow-y-auto pr-2">
+              <div className="space-y-3">
                 {threadMessages.map((message) => (
                   <ThreadMessageCard
                     key={message.id}
@@ -103,7 +118,7 @@ export function EmailDetail({ emailId, onBack }: EmailDetailProps) {
                   />
                 ))}
               </div>
-            </ScrollArea>
+            </div>
           </div>
         </div>
       </div>

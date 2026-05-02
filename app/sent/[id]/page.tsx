@@ -9,6 +9,11 @@ interface EmailPageProps {
   }>;
 }
 
+export const metadata = {
+  title: "Sent Email - MailPilot",
+  description: "View sent email details with AI assistance.",
+};
+
 export default async function SentEmailPage({ params }: EmailPageProps) {
   const session = await getCurrentSession();
 

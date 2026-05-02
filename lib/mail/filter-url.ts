@@ -31,7 +31,7 @@ export function mailFiltersEqual(left: MailFilters, right: MailFilters) {
   );
 }
 
-export function mailFilterSearchParams(filters: MailFilters) {
+function mailFilterSearchParams(filters: MailFilters) {
   const params = new URLSearchParams();
 
   if (filters.search.trim()) {

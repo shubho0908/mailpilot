@@ -40,7 +40,12 @@ function textFromEmail(email: Email) {
   return email.body || email.htmlBody?.replace(/<[^>]*>/g, "") || "";
 }
 
-function buildReplyDraft(email: Email, body?: string | null): AssistantComposeDraft {
+function buildReplyDraft(
+  email: Email,
+  body?: string | null,
+  cc?: string | null,
+  bcc?: string | null
+): AssistantComposeDraft {
   const subject = email.subject.startsWith("Re:") ? email.subject : `Re: ${email.subject}`;
   const references = Array.from(
     new Set([...((email.references || []) as string[]), email.messageId])
@@ -59,8 +64,8 @@ function buildReplyDraft(email: Email, body?: string | null): AssistantComposeDr
 
   return {
     to: email.from.email,
-    cc: undefined,
-    bcc: undefined,
+    cc: cc || undefined,
+    bcc: bcc || undefined,
     subject,
     body: `${body?.trim() ? `${body.trim()}\n` : ""}${original}`,
     mode: composeModeSchema.enum.reply,
@@ -178,6 +183,8 @@ async function resolveCommand(
       type: "composeDraft",
       draft: {
         to: command.draft.to,
+        cc: command.draft.cc || undefined,
+        bcc: command.draft.bcc || undefined,
         subject: command.draft.subject,
         body: command.draft.body,
         mode: composeModeSchema.enum.compose,
@@ -203,7 +210,7 @@ async function resolveCommand(
     }
 
     const email = await getEmail(auth, context.openEmailId);
-    const draft = buildReplyDraft(email, command.body);
+    const draft = buildReplyDraft(email, command.body, command.cc, command.bcc);
     const shouldSend = command.shouldSend ?? false;
     actions.push({ type: "navigate", path: pathForMailRoute("compose") });
     actions.push({
@@ -228,6 +235,23 @@ async function resolveCommand(
     actions.push({
       type: "clearFilters",
       view: command.view ?? context.currentView ?? mailViewSchema.enum.inbox,
+    });
+  }
+
+  if (command.type === "delete") {
+    if (!context.openEmailId) {
+      return assistantResponseSchema.parse({
+        message: "Open an email first, then I can delete it.",
+        actions: [],
+        previews: [],
+      });
+    }
+
+    actions.push({
+      type: "deleteEmail",
+      emailId: context.openEmailId,
+      requiresApproval: true,
+      approvalPrompt: "Delete this email?",
     });
   }
 

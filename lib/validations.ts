@@ -2,7 +2,22 @@ import { z } from "zod";
 import { mailLabelSchema, type MailLabel } from "@/lib/mail/types";
 
 const emailSchema = z.email();
-const emailOrArraySchema = z.union([emailSchema, z.array(emailSchema)]);
+
+const parseEmails = (value: unknown): string[] => {
+  if (Array.isArray(value)) return value;
+  if (typeof value === "string") {
+    return value
+      .split(",")
+      .map((e) => e.trim())
+      .filter(Boolean);
+  }
+  return [];
+};
+
+const emailOrArraySchema = z.preprocess(
+  parseEmails,
+  z.array(emailSchema).min(1, "At least one email is required")
+);
 
 export type Label = MailLabel;
 
@@ -23,8 +38,6 @@ export const sendEmailSchema = z.object({
   inReplyTo: z.string().optional(),
   references: z.array(z.string()).optional(),
 });
-
-export type ListEmailsQuery = z.infer<typeof listEmailsQuerySchema>;
 
 export const listEmailsQuerySchema = z.object({
   label: mailLabelSchema.optional(),

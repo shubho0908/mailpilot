@@ -2,7 +2,7 @@
 
 import { useTheme } from "next-themes";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { AssistantToggle } from "./assistantPanel";
 import { useAssistantStore } from "@/lib/store/assistant-store";
@@ -12,15 +12,11 @@ import { mailRouteSchema, mailViewSchema, pathForMailRoute } from "@/lib/mail/ty
 export function MailNavbar() {
   const pathname = usePathname();
   const { setTheme, resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const [mounted] = useState(false);
   const { isOpen } = useAssistantStore();
   const inboxPath = pathForMailRoute(mailViewSchema.enum.inbox);
   const sentPath = pathForMailRoute(mailViewSchema.enum.sent);
   const composePath = pathForMailRoute(mailRouteSchema.enum.compose);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   return (
     <nav
@@ -29,6 +25,7 @@ export function MailNavbar() {
         isOpen && "-translate-x-[calc(50%+200px)]",
         !isOpen && "-translate-x-1/2"
       )}
+      suppressHydrationWarning
     >
       <div className="flex items-center justify-between gap-2 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-2xl rounded-2xl px-3 py-2.5 mt-3 sm:mt-4 border border-white/40 dark:border-zinc-700/40 shadow-[0_8px_32px_-4px_rgba(0,0,0,0.08),0_4px_16px_-4px_rgba(0,0,0,0.04),0_2px_8px_-2px_rgba(0,0,0,0.02)] dark:shadow-[0_8px_32px_-4px_rgba(0,0,0,0.5),0_4px_16px_-4px_rgba(0,0,0,0.3),0_2px_8px_-2px_rgba(0,0,0,0.2)] ring-1 ring-white/50 dark:ring-zinc-600/50">
         <div className="flex items-center gap-2.5 pr-3 border-r border-zinc-200/60 dark:border-zinc-800/60 flex-shrink-0">

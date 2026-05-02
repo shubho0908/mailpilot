@@ -1,20 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEmails } from "@/hooks/queries/use-emails";
 import type { Email } from "@/services/gmail/gmail.types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { DatePicker } from "@/components/ui/datePicker";
 import { Pagination } from "@/components/ui/pagination";
 import { useMailStore } from "@/lib/store/mail-store";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -26,6 +17,8 @@ import {
 } from "@/lib/mail/filter-url";
 import { normalizeInclusiveDateRange } from "@/lib/mail/date-range";
 import { mailViewByLabel } from "@/lib/mail/types";
+import { EmailListViewHeader } from "./emailListView/emailListViewHeader";
+import { EmailListViewFilter } from "./emailListView/emailListViewFilter";
 
 interface EmailListViewProps {
   label: Label;
@@ -38,13 +31,14 @@ interface EmailListViewProps {
   showRecipientFilter?: boolean;
 }
 
-export function EmailListView({
+function EmailListViewContent({
   label,
   title,
   listItemComponent: ListItemComponent,
   showRecipientFilter = false,
 }: EmailListViewProps) {
   const router = useRouter();
+  const { push, replace } = router;
   const searchParams = useSearchParams();
   const pageToken = searchParams.get("pageToken") || undefined;
   const view = mailViewByLabel[label];
@@ -103,9 +97,9 @@ export function EmailListView({
 
   const handleEmailClick = useCallback(
     (id: string) => {
-      router.push(`/${label.toLowerCase()}/${id}`);
+      push(`/${label.toLowerCase()}/${id}`);
     },
-    [router, label]
+    [push, label]
   );
 
   const handleRetry = useCallback(() => {
@@ -120,153 +114,79 @@ export function EmailListView({
       } else if (direction === "prev") {
         params.delete("pageToken");
       }
-      router.push(`?${params.toString()}`, { scroll: false });
+      push(`?${params.toString()}`, { scroll: false });
     },
-    [router, searchParams, data]
+    [push, searchParams, data]
   );
 
   const handleFilterChange = useCallback(
     (newFilters: Partial<typeof filters>) => {
-      router.replace(mailFilterHref(view, { ...filters, ...newFilters }), { scroll: false });
+      replace(mailFilterHref(view, { ...filters, ...newFilters }), { scroll: false });
     },
-    [filters, router, view]
+    [filters, replace, view]
   );
 
   const handleClearFilters = useCallback(() => {
-    router.push(`/${view}`, { scroll: false });
-  }, [router, view]);
+    push(`/${view}`, { scroll: false });
+  }, [push, view]);
 
-  const senderOptions = useMemo(
-    () => [
+  const senderOptions = useMemo(() => {
+    const options: { value: string; label: string }[] = [
       { value: "", label: showRecipientFilter ? "All recipients" : "All senders" },
-      ...Array.from(
-        new Set(
-          showRecipientFilter
-            ? emails.flatMap((email: Email) => email.to.map((recipient) => recipient.email))
-            : emails.map((email: Email) => email.from.email)
-        ).add(filters.sender || "")
-      )
-        .map((email) => {
-          if (!email) {
-            return null;
-          }
+    ];
 
-          const [local, domain = ""] = email.split("@");
-          const domainWithoutTld = domain.split(".")[0] || domain;
+    const emailSet = new Set(
+      showRecipientFilter
+        ? emails.flatMap((email: Email) => email.to.map((recipient) => recipient.email))
+        : emails.map((email: Email) => email.from.email)
+    );
+    emailSet.add(filters.sender || "");
 
-          if (local.length > 8 || domainWithoutTld.length > 8) {
-            const truncatedLocal = local.length > 8 ? `${local.slice(0, 8)}...` : local;
-            const truncatedDomain =
-              domainWithoutTld.length > 8 ? `${domainWithoutTld.slice(0, 8)}...` : domainWithoutTld;
-            return {
-              value: email,
-              label: `${truncatedLocal}@${truncatedDomain}`,
-            };
-          }
-          return { value: email, label: email };
-        })
-        .filter((option): option is { value: string; label: string } => Boolean(option)),
-    ],
-    [emails, filters.sender, showRecipientFilter]
-  );
+    for (const email of emailSet) {
+      if (!email) continue;
+
+      const [local, domain = ""] = email.split("@");
+      const domainWithoutTld = domain.split(".")[0] || domain;
+
+      if (local.length > 8 || domainWithoutTld.length > 8) {
+        const truncatedLocal = local.length > 8 ? `${local.slice(0, 8)}...` : local;
+        const truncatedDomain =
+          domainWithoutTld.length > 8 ? `${domainWithoutTld.slice(0, 8)}...` : domainWithoutTld;
+        options.push({
+          value: email,
+          label: `${truncatedLocal}@${truncatedDomain}`,
+        });
+      } else {
+        options.push({ value: email, label: email });
+      }
+    }
+
+    return options;
+  }, [emails, filters.sender, showRecipientFilter]);
 
   return (
     <div className="py-6 sm:py-8">
       <div className="max-w-6xl mx-auto px-2 sm:px-0">
-        <div className="mb-6 sm:mb-8">
-          <div className="flex items-end justify-between mb-4 sm:mb-6">
-            <div className="flex-1">
-              <h1 className="text-2xl sm:text-3xl md:text-4xl tracking-tighter leading-none text-zinc-900 dark:text-zinc-50 mb-2 sm:mb-3">
-                {title}
-              </h1>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed max-w-md">
-                {isLoading && !data
-                  ? "Loading your emails..."
-                  : `${emails.length} email${emails.length !== 1 ? "s" : ""}${hasActiveFilters && data?.resultSizeEstimate ? ` (filtered from ${data.resultSizeEstimate})` : ""}`}
-              </p>
-            </div>
-            {hasActiveFilters && !isLoading && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleClearFilters}
-                className="text-xs sm:text-sm"
-              >
-                Clear filters
-              </Button>
-            )}
-          </div>
-
-          <div className="relative bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl rounded-xl p-1 ring-1 ring-black/[0.02] dark:ring-white/[0.05] shadow-[0_2px_8px_-1px_rgba(0,0,0,0.04),0_1px_4px_-1px_rgba(0,0,0,0.03)] dark:shadow-[0_2px_8px_-1px_rgba(0,0,0,0.3),0_1px_4px_-1px_rgba(0,0,0,0.2)]">
-            <div className="bg-white dark:bg-zinc-900 rounded-lg p-3 sm:p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]">
-              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                <div className="flex-1 min-w-[200px] sm:min-w-[280px]">
-                  <Input
-                    type="text"
-                    placeholder="Search emails..."
-                    value={filters.search}
-                    onChange={(e) => handleFilterChange({ search: e.target.value })}
-                    className="h-9 sm:h-10 rounded-lg border-zinc-200 dark:border-zinc-800 text-sm"
-                  />
-                </div>
-                <div className="flex flex-wrap gap-2 sm:gap-3">
-                  <DatePicker
-                    value={filters.dateFrom || ""}
-                    onChange={(value) => handleFilterChange({ dateFrom: value || null })}
-                    placeholder="From"
-                    className="h-9 sm:h-10 w-full sm:w-40"
-                  />
-                  <DatePicker
-                    value={filters.dateTo || ""}
-                    onChange={(value) => handleFilterChange({ dateTo: value || null })}
-                    placeholder="To"
-                    className="h-9 sm:h-10 w-full sm:w-40"
-                  />
-                  <Select
-                    value={filters.sender || ""}
-                    onValueChange={(value) => handleFilterChange({ sender: value || null })}
-                  >
-                    <SelectTrigger className="h-9 sm:h-10 w-full sm:w-48">
-                      <SelectValue
-                        placeholder={showRecipientFilter ? "Filter by recipient" : "Sender"}
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {senderOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select
-                    value={filters.unread === null ? "all" : filters.unread ? "unread" : "read"}
-                    onValueChange={(value) =>
-                      handleFilterChange({
-                        unread: value === "all" ? null : value === "unread",
-                      })
-                    }
-                  >
-                    <SelectTrigger className="h-9 sm:h-10 w-full sm:w-36">
-                      <SelectValue placeholder="Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All mail</SelectItem>
-                      <SelectItem value="unread">Unread</SelectItem>
-                      <SelectItem value="read">Read</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <EmailListViewHeader
+          title={title}
+          emailsCount={emails.length}
+          resultSizeEstimate={data?.resultSizeEstimate}
+          hasActiveFilters={hasActiveFilters === true}
+          isLoading={isLoading}
+          onClearFilters={handleClearFilters}
+        />
+        <EmailListViewFilter
+          filters={filters}
+          senderOptions={senderOptions}
+          showRecipientFilter={showRecipientFilter}
+          onFilterChange={handleFilterChange}
+        />
 
         {isLoading && !data ? (
           <div className="space-y-3">
-            {[...Array(5)].map((_, i) => (
+            {Array.from({ length: 5 }).map((_, i) => (
               <div
-                key={i}
+                key={`skeleton-${label}-item-${i}`}
                 className="relative bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl rounded-xl p-0.5 ring-1 ring-black/[0.02] dark:ring-white/[0.05] shadow-[0_2px_8px_-1px_rgba(0,0,0,0.04),0_1px_4px_-1px_rgba(0,0,0,0.03)] dark:shadow-[0_2px_8px_-1px_rgba(0,0,0,0.3),0_1px_4px_-1px_rgba(0,0,0,0.2)]"
               >
                 <div className="bg-white dark:bg-zinc-900 rounded-lg p-3 sm:p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]">
@@ -377,5 +297,43 @@ export function EmailListView({
         )}
       </div>
     </div>
+  );
+}
+
+function EmailListViewSkeleton() {
+  return (
+    <div className="py-6 sm:py-8">
+      <div className="max-w-6xl mx-auto px-2 sm:px-0">
+        <div className="space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div
+              key={`skeleton-fallback-item-${i}`}
+              className="relative bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl rounded-xl p-0.5 ring-1 ring-black/[0.02] dark:ring-white/[0.05] shadow-[0_2px_8px_-1px_rgba(0,0,0,0.04),0_1px_4px_-1px_rgba(0,0,0,0.03)] dark:shadow-[0_2px_8px_-1px_rgba(0,0,0,0.3),0_1px_4px_-1px_rgba(0,0,0,0.2)]"
+            >
+              <div className="bg-white dark:bg-zinc-900 rounded-lg p-3 sm:p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]">
+                <div className="flex items-start gap-3 sm:gap-4">
+                  <Skeleton className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex-shrink-0" />
+                  <div className="flex-1 space-y-2 min-w-0">
+                    <Skeleton className="h-4 w-24 sm:w-32" />
+                    <Skeleton className="h-3 w-20 sm:w-24" />
+                    <Skeleton className="h-3 w-full" />
+                    <Skeleton className="h-3 w-3/4 sm:w-3/4" />
+                  </div>
+                  <Skeleton className="h-3 w-10 sm:w-12 flex-shrink-0" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function EmailListView(props: EmailListViewProps) {
+  return (
+    <Suspense fallback={<EmailListViewSkeleton />}>
+      <EmailListViewContent {...props} />
+    </Suspense>
   );
 }

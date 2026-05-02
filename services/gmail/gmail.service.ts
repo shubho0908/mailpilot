@@ -233,3 +233,16 @@ export async function sendEmail(auth: GmailAuth, payload: SendEmailPayload): Pro
     handleApiError(error, "sendEmail");
   }
 }
+
+export async function deleteEmail(auth: GmailAuth, id: string): Promise<void> {
+  try {
+    const gmail = await getGmailClient(auth);
+    await gmail.users.messages.trash({
+      userId: "me",
+      id,
+    });
+  } catch (error) {
+    logger.error("Failed to delete email", error, { id });
+    handleApiError(error, "deleteEmail");
+  }
+}

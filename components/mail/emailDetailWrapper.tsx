@@ -1,7 +1,7 @@
 "use client";
 
 import { EmailDetail } from "./emailDetail";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { mailViewSchema, pathForMailRoute } from "@/lib/mail/types";
 
 interface EmailDetailWrapperProps {
@@ -10,17 +10,18 @@ interface EmailDetailWrapperProps {
 
 export function EmailDetailWrapper({ emailId }: EmailDetailWrapperProps) {
   const router = useRouter();
-  const pathname = usePathname();
+  const { push } = router;
   const inboxPath = pathForMailRoute(mailViewSchema.enum.inbox);
   const sentPath = pathForMailRoute(mailViewSchema.enum.sent);
 
   const handleBack = () => {
+    const pathname = window.location.pathname;
     if (pathname.startsWith(inboxPath)) {
-      router.push(inboxPath);
+      push(inboxPath);
     } else if (pathname.startsWith(sentPath)) {
-      router.push(sentPath);
+      push(sentPath);
     } else {
-      router.push(inboxPath);
+      push(inboxPath);
     }
   };
 
