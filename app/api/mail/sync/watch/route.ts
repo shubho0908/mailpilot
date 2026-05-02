@@ -6,11 +6,14 @@ import { requireGmailAuth, handleAuthError } from "@/lib/auth-session";
 import { createLogger } from "@/lib/logger";
 import { WATCH_RENEWAL_WINDOW_MS } from "@/lib/sync/constants";
 import { setupGmailWatch } from "@/services/gmail/gmail.sync";
+import { assertSameOrigin } from "@/lib/request-auth";
 
 const logger = createLogger("api:mail:sync:watch");
 
 export async function POST(request: NextRequest) {
   try {
+    assertSameOrigin(request.headers);
+
     const { auth, userId } = await requireGmailAuth(request.headers);
     const [existingState] = await db
       .select()
@@ -67,7 +70,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     const authError = handleAuthError(error);
-    if (authError.status === 401) {
+    if (authError.status !== 500) {
       return authError;
     }
 

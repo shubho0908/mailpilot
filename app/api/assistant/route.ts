@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { handleAuthError, requireGmailAuth } from "@/lib/auth-session";
 import { isAppError, isAuthError } from "@/lib/errors";
 import { createLogger } from "@/lib/logger";
-import { requireEnv } from "@/lib/env";
 import { assistantRequestSchema } from "@/lib/assistant/actions";
 import { buildSystemPrompt, generateCommandWithRetry } from "@/lib/assistant/command-generator";
 import { resolveCommand } from "@/lib/assistant/command-resolver";
@@ -12,10 +11,10 @@ import type { ModelMessage } from "ai";
 import { z } from "zod";
 import { getEmail } from "@/services/gmail/gmail.service";
 import { toAssistantOpenEmail } from "@/lib/assistant/email-transformers";
+import { getUserOpenAIKey } from "@/lib/api-key-utils";
+import { assertSameOrigin } from "@/lib/request-auth";
 
 const logger = createLogger("api:assistant");
-
-requireEnv("OPENAI_API_KEY");
 
 function getErrorName(error: unknown) {
   return error instanceof Error ? error.name : "UnknownError";
@@ -31,6 +30,8 @@ function toModelMessage(message: AssistantChatMessage): ModelMessage {
 
 export async function POST(request: NextRequest) {
   try {
+    assertSameOrigin(request.headers);
+
     const body = await request.json();
     const parsedBody = assistantRequestSchema.safeParse(body);
 
@@ -43,6 +44,14 @@ export async function POST(request: NextRequest) {
 
     const { auth, userId } = await requireGmailAuth(request.headers);
     const { messages, context } = parsedBody.data;
+    const apiKey = await getUserOpenAIKey(userId);
+
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: "OpenAI API key is not configured for this user" },
+        { status: 400 }
+      );
+    }
 
     let enrichedContext = context;
     if (context.openEmailId && !context.openEmail) {
@@ -63,12 +72,21 @@ export async function POST(request: NextRequest) {
     const systemPrompt = buildSystemPrompt(enrichedContext);
     const mappedMessages = messages.map(toModelMessage);
 
-    const commandResult = await generateCommandWithRetry(mappedMessages, systemPrompt, userId);
+    const commandResult = await generateCommandWithRetry(
+      mappedMessages,
+      systemPrompt,
+      userId,
+      apiKey
+    );
     const response = await resolveCommand(commandResult, enrichedContext, auth);
 
-    return NextResponse.json(response);
+    return NextResponse.json({
+      message: response.message,
+      actions: response.actions,
+      previews: response.previews,
+    });
   } catch (error) {
-    if (isAuthError(error) || (isAppError(error) && error.statusCode === 401)) {
+    if (isAuthError(error) || (isAppError(error) && [401, 403].includes(error.statusCode))) {
       const authError = handleAuthError(error);
       return authError;
     }

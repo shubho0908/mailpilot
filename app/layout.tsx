@@ -3,7 +3,10 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { QueryProvider } from "@/components/providers/queryProvider";
 import { ThemeProvider } from "@/components/theme-provider";
+import { SyncProvider } from "@/components/providers/syncProvider";
 import { AssistantPanel } from "@/components/mail/assistantPanel";
+import { ApiKeyCheckWrapper } from "@/components/user/apiKeyCheckWrapper";
+import { UserProfileDropdownWrapper } from "@/components/user/userProfileDropdownWrapper";
 import { Toaster } from "sonner";
 
 const geistSans = Geist({
@@ -40,8 +43,13 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <QueryProvider>
-            {children}
-            <AssistantPanel />
+            <SyncProvider>
+              <ApiKeyCheckWrapper>
+                {children}
+                <AssistantPanel />
+                <UserProfileDropdownWrapper />
+              </ApiKeyCheckWrapper>
+            </SyncProvider>
           </QueryProvider>
           <Toaster />
         </ThemeProvider>

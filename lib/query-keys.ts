@@ -1,6 +1,7 @@
 const emailListRoot = ["emails", "list"];
 const emailDetailRoot = ["email", "detail"];
 const emailThreadRoot = ["email", "thread"];
+const userRoot = ["user"];
 
 export const queryKeys = {
   emails: {
@@ -41,5 +42,10 @@ export const queryKeys = {
     detail: (id: string) => [...emailDetailRoot, id],
     threads: () => emailThreadRoot,
     thread: (id: string) => [...emailThreadRoot, id],
+  },
+  user: {
+    all: userRoot,
+    me: () => [...userRoot, "me"],
+    apiKey: () => [...userRoot, "api-key"],
   },
 };

@@ -15,6 +15,13 @@
       "when": 1777718102384,
       "tag": "0001_slim_ozymandias",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777734918651,
+      "tag": "0002_unique_sentinels",
+      "breakpoints": true
     }
   ]
 }

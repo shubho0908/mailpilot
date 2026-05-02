@@ -4,23 +4,14 @@ import { db } from "@/db";
 import { gmailSyncState } from "@/db/schema";
 import { getGmailAuthForUserId } from "@/lib/auth-session";
 import { createLogger } from "@/lib/logger";
-import {
-  CRON_RENEWAL_WINDOW_MS,
-  GMAIL_SYNC_ENV,
-  HTTP_AUTH_SCHEME,
-  RuntimeEnvironment,
-} from "@/lib/sync/constants";
+import { CRON_RENEWAL_WINDOW_MS, GMAIL_SYNC_ENV } from "@/lib/sync/constants";
+import { hasBearerToken } from "@/lib/request-auth";
 import { setupGmailWatch } from "@/services/gmail/gmail.sync";
 
 const logger = createLogger("api:cron:renew-gmail-watches");
 
 function isAuthorized(request: NextRequest): boolean {
-  const secret = process.env[GMAIL_SYNC_ENV.cronSecret];
-  if (!secret) {
-    return process.env.NODE_ENV !== RuntimeEnvironment.Production;
-  }
-
-  return request.headers.get("authorization") === `${HTTP_AUTH_SCHEME} ${secret}`;
+  return hasBearerToken(request.headers, process.env[GMAIL_SYNC_ENV.cronSecret]);
 }
 
 export async function GET(request: NextRequest) {

@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
     );
   } catch (error) {
     const authError = handleAuthError(error);
-    if (authError.status === 401) {
+    if (authError.status !== 500) {
       return authError;
     }
     logger.error("Error fetching emails", error);

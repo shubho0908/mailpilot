@@ -6,7 +6,8 @@ import { db } from "@/db";
 import { gmailSyncState } from "@/db/schema";
 import { getGmailAuthForUserId } from "@/lib/auth-session";
 import { createLogger } from "@/lib/logger";
-import { GMAIL_SYNC_ENV, HTTP_AUTH_SCHEME, RuntimeEnvironment } from "@/lib/sync/constants";
+import { GMAIL_SYNC_ENV, HTTP_AUTH_SCHEME } from "@/lib/sync/constants";
+import { constantTimeEquals } from "@/lib/request-auth";
 import { broadcastMailEvent } from "@/lib/sync/sse-bus";
 import { listHistorySince } from "@/services/gmail/gmail.sync";
 import type { GmailHistoryChangeSet } from "@/services/gmail/gmail.sync";
@@ -34,7 +35,10 @@ function verifyWebhookToken(request: NextRequest): boolean {
 
   const queryToken = request.nextUrl.searchParams.get("token");
   const headerToken = request.headers.get("x-goog-channel-token");
-  return queryToken === expectedToken || headerToken === expectedToken;
+  return (
+    (queryToken ? constantTimeEquals(queryToken, expectedToken) : false) ||
+    (headerToken ? constantTimeEquals(headerToken, expectedToken) : false)
+  );
 }
 
 async function verifyPubSubOidc(request: NextRequest): Promise<boolean> {
@@ -67,7 +71,7 @@ async function authorizeWebhook(request: NextRequest): Promise<boolean> {
       error: error instanceof Error ? error.message : "Unknown verification error",
     });
   }
-  return process.env.NODE_ENV !== RuntimeEnvironment.Production;
+  return false;
 }
 
 function decodePubSubData(data: string | undefined): unknown {

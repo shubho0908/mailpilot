@@ -113,5 +113,5 @@ export function handleAuthError(error: unknown): NextResponse {
       );
     }
   }
-  return NextResponse.json({ error: "Authentication failed" }, { status: 401 });
+  return NextResponse.json({ error: "Internal server error" }, { status: 500 });
 }

@@ -74,7 +74,7 @@ export function SyncStatusIndicator() {
           onMouseEnter={() => setIsOpen(true)}
           onMouseLeave={() => setIsOpen(false)}
           className={cn(
-            "absolute top-full mt-2 left-0 z-50",
+            "absolute top-full mt-2 left-1/2 -translate-x-1/2 z-50",
             "bg-foreground text-background px-4 py-2 rounded-lg text-xs whitespace-nowrap shadow-lg border border-border",
             "animate-in fade-in slide-in-from-top-1 duration-200"
           )}

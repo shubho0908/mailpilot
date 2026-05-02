@@ -1,3 +1,5 @@
+import crypto from "crypto";
+
 export function requireEnv(name: string) {
   const value = process.env[name];
 
@@ -6,4 +8,9 @@ export function requireEnv(name: string) {
   }
 
   return value;
+}
+
+export function generateEncryptionKey(): string {
+  const key = crypto.randomBytes(32);
+  return key.toString("hex");
 }

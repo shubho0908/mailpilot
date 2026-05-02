@@ -3,6 +3,7 @@ import { requireGmailAuth, handleAuthError } from "@/lib/auth-session";
 import { deleteEmail } from "@/services/gmail/gmail.service";
 import { createLogger } from "@/lib/logger";
 import { z } from "zod";
+import { assertSameOrigin } from "@/lib/request-auth";
 
 const logger = createLogger("api:mail:delete");
 
@@ -12,6 +13,8 @@ const deleteEmailSchema = z.object({
 
 export async function DELETE(request: NextRequest) {
   try {
+    assertSameOrigin(request.headers);
+
     const body = await request.json();
     const validationResult = deleteEmailSchema.safeParse(body);
 
@@ -32,7 +35,7 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
     const authError = handleAuthError(error);
-    if (authError.status === 401) {
+    if (authError.status !== 500) {
       return authError;
     }
     logger.error("Error deleting email", error);

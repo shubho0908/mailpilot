@@ -5,11 +5,14 @@ import type { SendEmailPayload } from "@/services/gmail/gmail.types";
 import { createLogger } from "@/lib/logger";
 import { sendEmailSchema } from "@/lib/validations";
 import { z } from "zod";
+import { assertSameOrigin } from "@/lib/request-auth";
 
 const logger = createLogger("api:mail:send");
 
 export async function POST(request: NextRequest) {
   try {
+    assertSameOrigin(request.headers);
+
     const body = await request.json();
     const validationResult = sendEmailSchema.safeParse(body);
 
@@ -58,7 +61,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ messageId }, { status: 201 });
   } catch (error) {
     const authError = handleAuthError(error);
-    if (authError.status === 401) {
+    if (authError.status !== 500) {
       return authError;
     }
     logger.error("Error sending email", error);
