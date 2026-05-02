@@ -2,17 +2,14 @@ import type { gmail_v1 } from "googleapis";
 import { google } from "googleapis";
 import { OAuth2Client, type Credentials } from "google-auth-library";
 import { createLogger } from "@/lib/logger";
+import { requireEnv } from "@/lib/env";
 import type { GmailAuth, GmailClientAuth } from "./gmail.types";
 
 const logger = createLogger("gmail.client");
 
 function requireGoogleOAuthConfig(): { clientId: string; clientSecret: string } {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-
-  if (!clientId || !clientSecret) {
-    throw new Error("GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be configured");
-  }
+  const clientId = requireEnv("GOOGLE_CLIENT_ID");
+  const clientSecret = requireEnv("GOOGLE_CLIENT_SECRET");
 
   return { clientId, clientSecret };
 }

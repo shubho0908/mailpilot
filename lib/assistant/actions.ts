@@ -36,6 +36,20 @@ export const assistantEmailPreviewSchema = z.object({
   unread: z.boolean(),
 });
 
+export const assistantOpenEmailSchema = z.object({
+  id: z.string(),
+  fromName: z.string(),
+  fromEmail: z.string(),
+  to: z.array(z.object({ name: z.string(), email: z.string() })),
+  subject: z.string(),
+  snippet: z.string(),
+  body: z.string().optional(),
+  htmlBody: z.string().optional(),
+  date: z.string(),
+  unread: z.boolean(),
+  starred: z.boolean(),
+});
+
 export const assistantUiActionSchema = z.union([
   z.object({
     type: z.literal("navigate"),
@@ -131,6 +145,7 @@ export const assistantRequestSchema = z.object({
     pathname: z.string(),
     currentView: assistantMailViewSchema.optional(),
     openEmailId: z.string().nullable().optional(),
+    openEmail: assistantOpenEmailSchema.optional(),
     filters: assistantFiltersSchema.optional(),
     currentDate: z.string(),
     timezone: z.string().optional(),
@@ -140,6 +155,7 @@ export const assistantRequestSchema = z.object({
 export type AssistantFilters = z.infer<typeof assistantFiltersSchema>;
 export type AssistantComposeDraft = z.infer<typeof assistantComposeDraftSchema>;
 export type AssistantEmailPreview = z.infer<typeof assistantEmailPreviewSchema>;
+export type AssistantOpenEmail = z.infer<typeof assistantOpenEmailSchema>;
 export type AssistantResponse = z.infer<typeof assistantResponseSchema>;
 export type AssistantUiAction = z.infer<typeof assistantUiActionSchema>;
 export type AssistantChatMessage = z.infer<typeof assistantChatMessageSchema>;

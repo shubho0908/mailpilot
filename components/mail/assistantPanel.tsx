@@ -2,12 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useAssistantStore } from "@/lib/store/assistant-store";
 import { useMailStore } from "@/lib/store/mail-store";
 import { mailFilterHref } from "@/lib/mail/filter-url";
+import { queryKeys } from "@/lib/query-keys";
 import { useSendEmail } from "@/hooks/mutations/use-send-email";
 import type {
   AssistantChatMessage,
@@ -17,23 +19,17 @@ import type {
 } from "@/lib/assistant/actions";
 import { assistantResponseSchema } from "@/lib/assistant/actions";
 import { assistantRoleSchema, mailRouteSchema, pathForMailRoute } from "@/lib/mail/types";
-import {
-  AlertCircle,
-  Check,
-  Loader2,
-  MailOpen,
-  MessageSquare,
-  Send,
-  Trash2,
-  X,
-} from "lucide-react";
+import type { Email } from "@/services/gmail/gmail.types";
+import { AlertCircle, Loader2, MessageSquare, Send, Trash2, X } from "lucide-react";
 import {
   getCurrentView,
   getOpenEmailId,
   draftToComposeState,
   getLatestDraft,
-  formatPreviewDate,
 } from "./assistant-utils";
+import { toAssistantOpenEmail } from "@/lib/assistant/email-transformers";
+import { MessageListItem } from "./assistant/messageListItem";
+import { PendingApprovalDialog } from "./assistant/pendingApprovalDialog";
 
 interface Message {
   id: string;
@@ -78,6 +74,7 @@ interface AssistantPanelProps {
 export function AssistantPanel({ className }: AssistantPanelProps = {}) {
   const router = useRouter();
   const pathname = usePathname();
+  const queryClient = useQueryClient();
   const { isOpen, closePanel } = useAssistantStore();
   const filters = useMailStore((state) => state.filters);
   const setOpenEmailId = useMailStore((state) => state.setOpenEmailId);
@@ -196,6 +193,19 @@ export function AssistantPanel({ className }: AssistantPanelProps = {}) {
     setIsThinking(true);
 
     try {
+      const openEmailId = getOpenEmailId(pathname);
+      let openEmail = undefined;
+
+      if (openEmailId) {
+        const cachedData = queryClient.getQueryData<{ email: Email }>(
+          queryKeys.email.detail(openEmailId)
+        );
+
+        if (cachedData?.email) {
+          openEmail = toAssistantOpenEmail(cachedData.email);
+        }
+      }
+
       const response = await fetch("/api/assistant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -204,7 +214,8 @@ export function AssistantPanel({ className }: AssistantPanelProps = {}) {
           context: {
             pathname,
             currentView: getCurrentView(pathname),
-            openEmailId: getOpenEmailId(pathname),
+            openEmailId,
+            openEmail,
             filters,
             currentDate: new Date().toISOString().split("T")[0],
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -227,7 +238,16 @@ export function AssistantPanel({ className }: AssistantPanelProps = {}) {
     } finally {
       setIsThinking(false);
     }
-  }, [addAssistantMessage, compactHistory, executeActions, filters, input, isThinking, pathname]);
+  }, [
+    addAssistantMessage,
+    compactHistory,
+    executeActions,
+    filters,
+    input,
+    isThinking,
+    pathname,
+    queryClient,
+  ]);
 
   const handleApproveSend = useCallback(() => {
     if (!pendingApproval) return;
@@ -342,101 +362,16 @@ export function AssistantPanel({ className }: AssistantPanelProps = {}) {
           )}
 
           {messages.map((message) => (
-            <div
-              key={message.id}
-              className={cn(
-                "flex gap-3",
-                message.role === "user" ? "justify-end" : "justify-start"
-              )}
-            >
-              {message.role === "assistant" && (
-                <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex-shrink-0">
-                  <MessageSquare className="w-3.5 h-3.5 text-white" />
-                </div>
-              )}
-              <div
-                className={cn(
-                  "max-w-[82%] rounded-xl px-3 py-2.5",
-                  message.role === "user"
-                    ? "bg-gradient-to-br from-emerald-500 to-teal-600 text-white"
-                    : "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
-                )}
-              >
-                <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
-
-                {message.previews && message.previews.length > 0 && (
-                  <div className="mt-3 space-y-2">
-                    {message.previews.map((preview) => (
-                      <div
-                        key={preview.id}
-                        className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white/70 dark:bg-zinc-900/60 p-2"
-                      >
-                        <div className="flex items-center justify-between gap-2 mb-1">
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            <MailOpen className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-                            <p className="text-xs font-medium truncate">{preview.fromName}</p>
-                          </div>
-                          <span className="text-[10px] text-zinc-500 flex-shrink-0">
-                            {formatPreviewDate(preview.date)}
-                          </span>
-                        </div>
-                        <p className="text-xs font-medium truncate">{preview.subject}</p>
-                        <p className="text-[11px] text-zinc-500 dark:text-zinc-400 line-clamp-2 mt-1">
-                          {preview.snippet}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <p
-                  className={cn(
-                    "text-[10px] mt-1",
-                    message.role === "user" ? "text-white/70" : "text-zinc-500 dark:text-zinc-400"
-                  )}
-                >
-                  {message.timestamp.toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </p>
-              </div>
-            </div>
+            <MessageListItem key={message.id} message={message} />
           ))}
 
           {pendingApproval && (
-            <div className="ml-10 rounded-xl border border-amber-200 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-950/30 p-3">
-              <p className="text-sm font-medium text-amber-950 dark:text-amber-100">
-                {pendingApproval.prompt}
-              </p>
-              <p className="mt-1 text-xs text-amber-800 dark:text-amber-200 break-words">
-                {pendingApproval.draft.subject} → {pendingApproval.draft.to}
-              </p>
-              <div className="mt-3 flex gap-2">
-                <Button
-                  onClick={handleApproveSend}
-                  disabled={isSending}
-                  size="sm"
-                  className="h-8 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 text-xs"
-                >
-                  {isSending ? (
-                    <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
-                  ) : (
-                    <Check className="w-3.5 h-3.5 mr-1" />
-                  )}
-                  Approve
-                </Button>
-                <Button
-                  onClick={handleRejectSend}
-                  disabled={isSending}
-                  variant="outline"
-                  size="sm"
-                  className="h-8 rounded-lg text-xs"
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
+            <PendingApprovalDialog
+              pendingApproval={pendingApproval}
+              isSending={isSending}
+              onApprove={handleApproveSend}
+              onReject={handleRejectSend}
+            />
           )}
 
           {isThinking && (

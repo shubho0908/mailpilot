@@ -2,13 +2,15 @@ import { generateText, Output, type ModelMessage } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
 import { createLogger } from "@/lib/logger";
+import { requireEnv } from "@/lib/env";
 import { assistantCommandSchema, assistantRequestSchema } from "@/lib/assistant/actions";
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
+const EMAIL_BODY_FULL_LENGTH = 10000;
 
 const logger = createLogger("assistant:command-generator");
-const ASSISTANT_MODEL = process.env.OPENAI_MODEL || "gpt-5-nano";
+const ASSISTANT_MODEL = requireEnv("OPENAI_MODEL");
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -19,25 +21,53 @@ function toError(error: unknown) {
 }
 
 function buildSystemPrompt(context: z.infer<typeof assistantRequestSchema>["context"]) {
+  let openEmailContext = "";
+  if (context.openEmail) {
+    const email = context.openEmail;
+    const toEmails = email.to.map((t) => t.email).join(", ");
+    const bodyPreview = email.body
+      ? email.body.substring(0, EMAIL_BODY_FULL_LENGTH) +
+        (email.body.length > EMAIL_BODY_FULL_LENGTH ? "..." : "")
+      : "";
+
+    openEmailContext = [
+      `Open email details:`,
+      `- Subject: ${email.subject}`,
+      `- From: ${email.fromName} <${email.fromEmail}>`,
+      `- To: ${toEmails}`,
+      `- Date: ${email.date}`,
+      `- Unread: ${email.unread}`,
+      `- Starred: ${email.starred}`,
+      `- Snippet: ${email.snippet}`,
+      bodyPreview ? `- Body: ${bodyPreview}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+  }
+
   return [
-    "You are MailPilot's UI-control planner. Convert the user's natural language into exactly one command.",
-    "The browser, not you, will execute navigation and form filling. Never invent Gmail message IDs.",
-    "Your first priority is to drive the mailbox UI. Use answer only when no useful UI action applies.",
-    "Use filter for requests like show, find, search, filter, only unread, last N days, this week, or last N emails.",
-    "For requests to check or show mail from a specific email address, use filter with that address as sender.",
-    "Use openEmail only when the user explicitly asks to open/read/display a specific email.",
-    "Use compose when the user asks to write, compose, draft, or send a new email.",
-    "Use reply only when the user asks to reply to the currently open email.",
-    "For any request to send, set shouldSend true. The UI will still ask the user for approval before sending.",
-    "For date filters, return ISO dates in YYYY-MM-DD. Interpret relative dates from the provided current date.",
-    "For 'last N emails', set maxResults to N. For 'last N days', set dateFrom and dateTo.",
-    "If the user gives a sender name but not an email address, put that name in sender; the server will turn it into a search.",
-    "IMPORTANT: Always respond with valid JSON matching the exact schema structure.",
-    "Your response must be a JSON object with 'response' (string) and 'command' (object) fields.",
-    `Current date: ${context.currentDate}. Timezone: ${context.timezone || "unknown"}.`,
-    `Current pathname: ${context.pathname}. Current view: ${context.currentView || "unknown"}. Open email id: ${context.openEmailId || "none"}.`,
-    `Current filters: ${JSON.stringify(context.filters || {})}.`,
-  ].join("\n");
+    "Role: UI-control planner. Convert user input to exactly one command.",
+    "Browser executes navigation. Never invent Gmail message IDs.",
+    "Priority: drive mailbox UI. Use 'answer' only when no UI action applies.",
+    "Commands:",
+    "- filter: show/find/search emails (unread, date ranges, sender)",
+    "- openEmail: explicitly open/read specific email",
+    "- compose: write/draft/send new email",
+    "- reply: respond to currently open email",
+    "- answer: explain/summarize currently open email (no UI actions, no IDs)",
+    "- navigate: change view",
+    "- clearFilters: reset filters",
+    "Send requests: set shouldSend=true. UI requires approval.",
+    "Dates: ISO format (YYYY-MM-DD). 'last N emails' = maxResults=N. 'last N days' = dateFrom/dateTo.",
+    "Sender: non-email → search term, email → filter by sender.",
+    "Response format: JSON with 'response' (string) and 'command' (object).",
+    `Date: ${context.currentDate}. TZ: ${context.timezone || "unknown"}.`,
+    `Path: ${context.pathname}. View: ${context.currentView || "unknown"}. Open email: ${context.openEmailId || "none"}.`,
+    `Filters: ${JSON.stringify(context.filters || {})}.`,
+    openEmailContext,
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 async function generateCommandWithRetry(
