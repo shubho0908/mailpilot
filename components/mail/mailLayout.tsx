@@ -8,7 +8,7 @@ interface MailLayoutProps {
   children?: React.ReactNode;
 }
 
-function MailLayoutContent({ children }: MailLayoutProps = {}) {
+function MailLayoutContent({ children }: MailLayoutProps) {
   const { isOpen } = useAssistantStore();
 
   return (

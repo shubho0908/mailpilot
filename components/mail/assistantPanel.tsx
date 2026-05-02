@@ -97,6 +97,63 @@ function assistantPanelReducer(
   }
 }
 
+interface AssistantPanelContentProps {
+  closePanel: () => void;
+  isThinking: boolean;
+  messages: Message[];
+  error: string | null;
+  pendingApproval: PendingApproval | null;
+  scrollRef: React.RefObject<HTMLDivElement | null>;
+  onApproveSend: () => void;
+  onRejectSend: () => void;
+  input: string;
+  onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  onSendMessage: () => void;
+  onInputChange: (value: string) => void;
+  onClearConversation: () => void;
+}
+
+function AssistantPanelContent({
+  closePanel,
+  isThinking,
+  messages,
+  error,
+  pendingApproval,
+  scrollRef,
+  onApproveSend,
+  onRejectSend,
+  input,
+  onKeyDown,
+  onSendMessage,
+  onInputChange,
+  onClearConversation,
+}: AssistantPanelContentProps) {
+  return (
+    <>
+      <AssistantPanelHeader onClose={closePanel} isThinking={isThinking} />
+      <div className="min-h-0 flex-1 overflow-y-auto p-3" ref={scrollRef}>
+        <AssistantPanelMessagesList
+          messages={messages}
+          error={error}
+          pendingApproval={pendingApproval}
+          isThinking={isThinking}
+          onApproveSend={onApproveSend}
+          onRejectSend={onRejectSend}
+        />
+      </div>
+      <AssistantPanelFooter
+        messages={messages}
+        input={input}
+        onKeyDown={onKeyDown}
+        isThinking={isThinking}
+        onSendMessage={onSendMessage}
+        onInputChange={onInputChange}
+        onClearConversation={onClearConversation}
+      />
+    </>
+  );
+}
+
 interface AssistantPanelProps {
   className?: string;
 }
@@ -409,31 +466,6 @@ export function AssistantPanel({ className }: AssistantPanelProps = {}) {
     }
   };
 
-  const AssistantPanelContent = () => (
-    <>
-      <AssistantPanelHeader onClose={closePanel} isThinking={isThinking} />
-      <div className="min-h-0 flex-1 overflow-y-auto p-3" ref={scrollRef}>
-        <AssistantPanelMessagesList
-          messages={messages}
-          error={error}
-          pendingApproval={pendingApproval}
-          isThinking={isThinking}
-          onApproveSend={handleApproveSend}
-          onRejectSend={handleRejectSend}
-        />
-      </div>
-      <AssistantPanelFooter
-        messages={messages}
-        input={input}
-        onKeyDown={handleKeyDown}
-        isThinking={isThinking}
-        onSendMessage={handleSendMessage}
-        onInputChange={(value: string) => dispatch({ type: "SET_INPUT", value })}
-          onClearConversation={handleClearConversation}
-      />
-    </>
-  );
-
   return (
     <>
       <div
@@ -461,7 +493,21 @@ export function AssistantPanel({ className }: AssistantPanelProps = {}) {
         aria-label="AI Assistant"
       >
         <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-zinc-300 dark:bg-zinc-700" />
-        <AssistantPanelContent />
+        <AssistantPanelContent
+          closePanel={closePanel}
+          isThinking={isThinking}
+          messages={messages}
+          error={error}
+          pendingApproval={pendingApproval}
+          scrollRef={scrollRef}
+          onApproveSend={handleApproveSend}
+          onRejectSend={handleRejectSend}
+          input={input}
+          onKeyDown={handleKeyDown}
+          onSendMessage={handleSendMessage}
+          onInputChange={(value: string) => dispatch({ type: "SET_INPUT", value })}
+          onClearConversation={handleClearConversation}
+        />
       </div>
 
       <div
@@ -479,7 +525,21 @@ export function AssistantPanel({ className }: AssistantPanelProps = {}) {
         aria-hidden={!isOpen}
         aria-label="AI Assistant"
       >
-        <AssistantPanelContent />
+        <AssistantPanelContent
+          closePanel={closePanel}
+          isThinking={isThinking}
+          messages={messages}
+          error={error}
+          pendingApproval={pendingApproval}
+          scrollRef={scrollRef}
+          onApproveSend={handleApproveSend}
+          onRejectSend={handleRejectSend}
+          input={input}
+          onKeyDown={handleKeyDown}
+          onSendMessage={handleSendMessage}
+          onInputChange={(value: string) => dispatch({ type: "SET_INPUT", value })}
+          onClearConversation={handleClearConversation}
+        />
       </div>
     </>
   );

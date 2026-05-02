@@ -5,15 +5,12 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
 import { AssistantToggle } from "./assistantPanel";
-import { useAssistantStore } from "@/lib/store/assistant-store";
-import { cn } from "@/lib/utils";
 import { mailRouteSchema, mailViewSchema, pathForMailRoute } from "@/lib/mail/types";
 
 export function MailNavbar() {
   const pathname = usePathname();
   const { setTheme, resolvedTheme } = useTheme();
   const [mounted] = useState(false);
-  const { isOpen } = useAssistantStore();
   const inboxPath = pathForMailRoute(mailViewSchema.enum.inbox);
   const sentPath = pathForMailRoute(mailViewSchema.enum.sent);
   const composePath = pathForMailRoute(mailRouteSchema.enum.compose);
