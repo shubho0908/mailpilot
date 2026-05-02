@@ -11,6 +11,7 @@ const EMAIL_FRAME_HEAD = `<base target="_blank" />
   html,
   body {
     width: 100%;
+    max-width: 100%;
     margin: 0;
     padding: 0;
   }
@@ -21,6 +22,7 @@ const EMAIL_FRAME_HEAD = `<base target="_blank" />
     color: #18181b;
     overflow-wrap: anywhere;
     word-break: normal;
+    -webkit-text-size-adjust: 100%;
   }
 
   img,
@@ -31,6 +33,32 @@ const EMAIL_FRAME_HEAD = `<base target="_blank" />
 
   table {
     max-width: 100% !important;
+  }
+
+  td,
+  th {
+    max-width: 100% !important;
+    overflow-wrap: anywhere;
+  }
+
+  pre,
+  code {
+    white-space: pre-wrap !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  @media (max-width: 480px) {
+    body {
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    table,
+    tbody,
+    tr,
+    td {
+      width: auto !important;
+    }
   }
 </style>`;
 
@@ -84,8 +112,7 @@ export function EmailHtmlFrame({ html, title }: EmailHtmlFrameProps) {
       srcDoc={srcDoc}
       onLoad={handleLoad}
       sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin"
-      className="block w-full border-0 bg-white"
-      style={{ height: "400px" }}
+      className="block min-h-[300px] w-full border-0 bg-white sm:h-[400px]"
     />
   );
 }

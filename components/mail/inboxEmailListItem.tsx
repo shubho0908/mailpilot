@@ -48,7 +48,7 @@ const EmailListItem = memo(({ email, onClick, index }: EmailListItemProps) => {
             </div>
 
             <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between gap-2 sm:gap-3 mb-2">
+              <div className="flex flex-col gap-2 mb-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                 <div className="flex-1 min-w-0">
                   <h3
                     className={`text-xs sm:text-sm font-medium tracking-tight ${email.unread ? "text-zinc-900 dark:text-zinc-50" : "text-zinc-600 dark:text-zinc-400"} transition-colors duration-300 truncate`}
@@ -59,7 +59,7 @@ const EmailListItem = memo(({ email, onClick, index }: EmailListItemProps) => {
                     {email.from.email}
                   </p>
                 </div>
-                <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                <div className="flex max-w-full flex-wrap items-center gap-1.5 sm:flex-shrink-0 sm:gap-2">
                   {email.starred && (
                     <svg
                       className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-400"
@@ -96,7 +96,7 @@ const EmailListItem = memo(({ email, onClick, index }: EmailListItemProps) => {
               </div>
 
               <h4
-                className={`text-xs sm:text-sm mb-1 leading-tight ${email.unread ? "font-medium text-zinc-900 dark:text-zinc-50" : "text-zinc-700 dark:text-zinc-300"}`}
+                className={`mb-1 break-words text-xs leading-tight sm:text-sm ${email.unread ? "font-medium text-zinc-900 dark:text-zinc-50" : "text-zinc-700 dark:text-zinc-300"}`}
               >
                 {email.subject}
               </h4>

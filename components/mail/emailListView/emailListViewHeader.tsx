@@ -19,8 +19,8 @@ export function EmailListViewHeader({
 }: EmailListViewHeaderProps) {
   return (
     <div className="mb-6 sm:mb-8">
-      <div className="flex items-end justify-between mb-4 sm:mb-6">
-        <div className="flex-1">
+      <div className="flex flex-col gap-3 mb-4 sm:mb-6 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0 flex-1">
           <h1 className="text-2xl sm:text-3xl md:text-4xl tracking-tighter leading-none text-zinc-900 dark:text-zinc-50 mb-2 sm:mb-3">
             {title}
           </h1>
@@ -31,7 +31,7 @@ export function EmailListViewHeader({
           </p>
         </div>
         {hasActiveFilters && !isLoading && (
-          <Button variant="ghost" size="sm" onClick={onClearFilters}>
+          <Button variant="ghost" size="sm" onClick={onClearFilters} className="self-start">
             Clear filters
           </Button>
         )}

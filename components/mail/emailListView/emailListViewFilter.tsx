@@ -25,8 +25,8 @@ export function EmailListViewFilter({
   return (
     <div className="mb-6 sm:mb-8 relative bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl rounded-xl p-1 ring-1 ring-black/[0.02] dark:ring-white/[0.05] shadow-[0_2px_8px_-1px_rgba(0,0,0,0.04),0_1px_4px_-1px_rgba(0,0,0,0.03)] dark:shadow-[0_2px_8px_-1px_rgba(0,0,0,0.3),0_1px_4px_-1px_rgba(0,0,0,0.2)]">
       <div className="bg-white dark:bg-zinc-900 rounded-lg p-3 sm:p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]">
-        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-          <div className="flex-1 min-w-[200px] sm:min-w-[280px]">
+        <div className="flex flex-col lg:flex-row gap-2 sm:gap-3">
+          <div className="min-w-0 flex-1 lg:min-w-[280px]">
             <Input
               type="text"
               placeholder="Search emails..."
@@ -35,24 +35,24 @@ export function EmailListViewFilter({
               className="h-9 sm:h-10 rounded-lg border-zinc-200 dark:border-zinc-800 text-sm"
             />
           </div>
-          <div className="flex flex-wrap gap-2 sm:gap-3">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 lg:flex lg:flex-wrap">
             <DatePicker
               value={filters.dateFrom || ""}
               onChange={(value) => onFilterChange({ dateFrom: value || null })}
               placeholder="From"
-              className="h-9 sm:h-10 w-full sm:w-40"
+              className="h-9 w-full sm:h-10 lg:w-40"
             />
             <DatePicker
               value={filters.dateTo || ""}
               onChange={(value) => onFilterChange({ dateTo: value || null })}
               placeholder="To"
-              className="h-9 sm:h-10 w-full sm:w-40"
+              className="h-9 w-full sm:h-10 lg:w-40"
             />
             <Select
               value={filters.sender || ""}
               onValueChange={(value) => onFilterChange({ sender: value || null })}
             >
-              <SelectTrigger className="h-9 sm:h-10 w-full sm:w-48">
+              <SelectTrigger className="h-9 w-full sm:h-10 lg:w-48">
                 <SelectValue placeholder={showRecipientFilter ? "Filter by recipient" : "Sender"} />
               </SelectTrigger>
               <SelectContent>
@@ -71,7 +71,7 @@ export function EmailListViewFilter({
                 })
               }
             >
-              <SelectTrigger className="h-9 sm:h-10 w-full sm:w-36">
+              <SelectTrigger className="h-9 w-full sm:h-10 lg:w-36">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>

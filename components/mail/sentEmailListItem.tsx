@@ -45,7 +45,7 @@ const EmailListItem = memo(({ email, onClick, index }: EmailListItemProps) => {
             </div>
 
             <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between gap-2 sm:gap-3 mb-2">
+              <div className="flex flex-col gap-2 mb-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                 <div className="flex-1 min-w-0">
                   <h3 className="text-xs sm:text-sm font-medium tracking-tight text-zinc-900 dark:text-zinc-50 truncate">
                     {email.to[0]?.name || email.to[0]?.email}
@@ -54,12 +54,12 @@ const EmailListItem = memo(({ email, onClick, index }: EmailListItemProps) => {
                     {email.to[0]?.email}
                   </p>
                 </div>
-                <span className="text-xs text-zinc-400 dark:text-zinc-500 whitespace-nowrap tracking-tight">
+                <span className="text-xs text-zinc-400 dark:text-zinc-500 whitespace-nowrap tracking-tight sm:flex-shrink-0">
                   <DateDisplay date={email.date} format="date" />
                 </span>
               </div>
 
-              <h4 className="text-xs sm:text-sm mb-1 leading-tight text-zinc-700 dark:text-zinc-300">
+              <h4 className="mb-1 break-words text-xs leading-tight text-zinc-700 dark:text-zinc-300 sm:text-sm">
                 {email.subject}
               </h4>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2 leading-relaxed">

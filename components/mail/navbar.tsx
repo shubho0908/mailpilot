@@ -20,14 +20,10 @@ export function MailNavbar() {
 
   return (
     <nav
-      className={cn(
-        "fixed top-0 left-1/2 z-40 px-4 sm:px-6 transition-transform duration-300 ease-out",
-        isOpen && "-translate-x-[calc(50%+200px)]",
-        !isOpen && "-translate-x-1/2"
-      )}
+      className="fixed top-0 left-1/2 z-40 w-full max-w-[calc(100vw-1rem)] -translate-x-1/2 px-2 sm:w-auto sm:max-w-none sm:px-6"
       suppressHydrationWarning
     >
-      <div className="flex items-center justify-between gap-2 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-2xl rounded-2xl px-3 py-2.5 mt-3 sm:mt-4 border border-white/40 dark:border-zinc-700/40 shadow-[0_8px_32px_-4px_rgba(0,0,0,0.08),0_4px_16px_-4px_rgba(0,0,0,0.04),0_2px_8px_-2px_rgba(0,0,0,0.02)] dark:shadow-[0_8px_32px_-4px_rgba(0,0,0,0.5),0_4px_16px_-4px_rgba(0,0,0,0.3),0_2px_8px_-2px_rgba(0,0,0,0.2)] ring-1 ring-white/50 dark:ring-zinc-600/50">
+      <div className="flex items-center justify-between gap-1 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-2xl rounded-2xl px-2 py-2.5 mt-3 sm:mt-4 border border-white/40 dark:border-zinc-700/40 shadow-[0_8px_32px_-4px_rgba(0,0,0,0.08),0_4px_16px_-4px_rgba(0,0,0,0.04),0_2px_8px_-2px_rgba(0,0,0,0.02)] dark:shadow-[0_8px_32px_-4px_rgba(0,0,0,0.5),0_4px_16px_-4px_rgba(0,0,0,0.3),0_2px_8px_-2px_rgba(0,0,0,0.2)] ring-1 ring-white/50 dark:ring-zinc-600/50 sm:gap-2 sm:px-3">
         <div className="flex items-center gap-2.5 pr-3 border-r border-zinc-200/60 dark:border-zinc-800/60 flex-shrink-0">
           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-[0_2px_8px_-1px_rgba(16,185,129,0.15)]">
             <svg
@@ -52,7 +48,7 @@ export function MailNavbar() {
         <div className="flex items-center gap-1 flex-1 justify-center">
           <Link
             href={inboxPath}
-            className={`px-3 py-2 rounded-xl text-sm font-medium tracking-tight transition-all duration-200 cursor-pointer whitespace-nowrap ${
+            className={`px-2.5 py-2 rounded-xl text-sm font-medium tracking-tight transition-all duration-200 cursor-pointer whitespace-nowrap sm:px-3 ${
               pathname === inboxPath || pathname.startsWith(`${inboxPath}/`)
                 ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)]"
                 : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
@@ -62,7 +58,7 @@ export function MailNavbar() {
           </Link>
           <Link
             href={sentPath}
-            className={`px-3 py-2 rounded-xl text-sm font-medium tracking-tight transition-all duration-200 cursor-pointer whitespace-nowrap ${
+            className={`px-2.5 py-2 rounded-xl text-sm font-medium tracking-tight transition-all duration-200 cursor-pointer whitespace-nowrap sm:px-3 ${
               pathname === sentPath
                 ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)]"
                 : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
@@ -114,7 +110,7 @@ export function MailNavbar() {
 
           <Link
             href={composePath}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-500 dark:bg-emerald-600 !text-white text-sm font-medium tracking-tight transition-all duration-200 hover:bg-emerald-600 dark:hover:bg-emerald-700 shadow-[0_1px_3px_-1px_rgba(16,185,129,0.2)] cursor-pointer [&_svg]:text-white"
+            className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl bg-emerald-500 dark:bg-emerald-600 !text-white text-sm font-medium tracking-tight transition-all duration-200 hover:bg-emerald-600 dark:hover:bg-emerald-700 shadow-[0_1px_3px_-1px_rgba(16,185,129,0.2)] cursor-pointer sm:px-3 [&_svg]:text-white"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path

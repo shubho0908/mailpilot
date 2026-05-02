@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DateDisplay } from "@/components/ui/date-display";
 import type { Email } from "@/services/gmail/gmail.types";
+import { Paperclip, Star, Reply, Forward, Trash2 } from "lucide-react";
 
 interface EmailHeaderProps {
   email: Email;
@@ -21,23 +22,30 @@ export function EmailHeader({
   onDelete,
 }: EmailHeaderProps) {
   return (
-    <div className="mb-6 pb-6 border-b border-zinc-200/60 dark:border-zinc-800/60">
+    <div className="mb-5 border-b border-zinc-200/60 pb-5 dark:border-zinc-800/60 sm:mb-6 sm:pb-6">
       {/* Subject Section */}
-      <div className="mb-6">
-        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50 leading-tight">
-          {email.subject}
-        </h1>
+      <div className="mb-5 sm:mb-6">
+        <div className="flex flex-col gap-2">
+          <h1 className="break-words text-[1.65rem] font-semibold leading-[1.08] tracking-[-0.035em] text-zinc-900 dark:text-zinc-50 sm:text-3xl">
+            {email.subject}
+          </h1>
+          {email.unread && (
+            <Badge className="w-fit rounded-md px-3 py-1.5 bg-emerald-500 text-white text-xs font-semibold shadow-sm shadow-emerald-500/20">
+              Unread
+            </Badge>
+          )}
+        </div>
       </div>
 
       {/* Main Header Content */}
-      <div className="flex flex-col lg:flex-row lg:items-start gap-6">
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
         {/* Left: Sender Info */}
-        <div className="flex items-start gap-4 flex-1 min-w-0">
+        <div className="flex min-w-0 flex-1 items-start gap-3.5 sm:gap-4">
           {/* Avatar */}
           <div className="relative flex-shrink-0">
-            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 p-0.5 shadow-lg shadow-emerald-500/20">
-              <div className="w-full h-full rounded-lg bg-white dark:bg-zinc-800 flex items-center justify-center">
-                <span className="text-lg sm:text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 p-0.5 shadow-lg shadow-emerald-500/20 sm:h-14 sm:w-14">
+              <div className="flex h-full w-full items-center justify-center rounded-lg bg-white dark:bg-zinc-800">
+                <span className="text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-xl">
                   {(email.from.name || email.from.email).charAt(0).toUpperCase()}
                 </span>
               </div>
@@ -45,23 +53,23 @@ export function EmailHeader({
           </div>
 
           {/* Sender Details */}
-          <div className="flex-1 min-w-0">
-            <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2 mb-1">
-              <h2 className="text-base sm:text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+          <div className="min-w-0 flex-1 pt-0.5">
+            <div className="mb-1 flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-2">
+              <h2 className="text-base font-semibold tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-lg">
                 {email.from.name || email.from.email}
               </h2>
-              <span className="text-sm text-zinc-500 dark:text-zinc-400 break-all font-mono">
+              <span className="break-all font-mono text-[0.8rem] leading-snug text-zinc-500 dark:text-zinc-400 sm:text-sm">
                 {email.from.email}
               </span>
             </div>
-            <div className="flex items-center gap-2 text-xs text-zinc-400 dark:text-zinc-500 mb-3">
+            <div className="mb-3 flex items-center gap-2 text-xs text-zinc-400 dark:text-zinc-500">
               <DateDisplay date={email.date} format="string" />
             </div>
 
             {email.to.length > 0 && (
-              <div className="text-sm text-zinc-600 dark:text-zinc-400">
+              <div className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
                 <span className="font-medium text-zinc-700 dark:text-zinc-300">To:</span>{" "}
-                <span className="font-mono text-xs">
+                <span className="break-all font-mono text-xs">
                   {email.to.map((recipient: { email: string }) => recipient.email).join(", ")}
                 </span>
               </div>
@@ -70,32 +78,32 @@ export function EmailHeader({
         </div>
 
         {/* Right: Action Buttons */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <div className="flex items-center gap-2 p-1.5 bg-zinc-100/80 dark:bg-zinc-800/80 rounded-xl border border-zinc-200/60 dark:border-zinc-700/60 backdrop-blur-sm">
+        <div className="flex w-full items-center gap-2 lg:w-auto lg:flex-shrink-0">
+          <div className="flex w-full flex-nowrap items-center gap-2 sm:w-auto">
             <Button
               onClick={onReply}
               size="sm"
-              className="h-9 px-4 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200 rounded-lg font-medium text-sm transition-all duration-200 shadow-sm"
+              className="h-9 min-w-[44px] px-2 text-xs font-medium rounded-lg bg-zinc-900 text-white shadow-sm transition-all duration-200 hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 sm:h-9 sm:w-auto sm:px-4 sm:text-sm"
             >
-              Reply
+              <Reply className="h-4 w-4" />
+              <span className="ml-1.5">Reply</span>
             </Button>
             <Button
-              variant="outline"
               onClick={onForward}
               size="sm"
-              className="h-9 px-4 border-zinc-300 dark:border-zinc-600 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg font-medium text-sm transition-all duration-200"
+              className="h-9 min-w-[44px] px-2 text-xs font-medium rounded-lg bg-zinc-900 text-white shadow-sm transition-all duration-200 hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 sm:h-9 sm:w-auto sm:px-4 sm:text-sm"
             >
-              Forward
+              <Forward className="h-4 w-4" />
+              <span className="ml-1.5">Forward</span>
             </Button>
-            {onDelete && <div className="w-px h-6 bg-zinc-300 dark:bg-zinc-600 mx-1" />}
             {onDelete && (
               <Button
-                variant="ghost"
                 onClick={onDelete}
                 size="sm"
-                className="h-9 px-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg font-medium text-sm transition-all duration-200"
+                className="h-9 min-w-[44px] px-2 text-xs font-medium rounded-lg text-red-600 transition-all duration-200 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 sm:h-9 sm:w-auto sm:px-4 sm:text-sm"
               >
-                Delete
+                <Trash2 className="h-4 w-4" />
+                <span className="ml-1.5">Delete</span>
               </Button>
             )}
           </div>
@@ -103,7 +111,7 @@ export function EmailHeader({
       </div>
 
       {/* Badges */}
-      <div className="flex flex-wrap gap-2 mt-5">
+      <div className="mt-5 flex flex-wrap gap-2">
         {threadMessages.length > 1 && (
           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">
             <svg
@@ -124,25 +132,22 @@ export function EmailHeader({
             </span>
           </div>
         )}
-        {email.unread && (
-          <Badge className="rounded-md px-3 py-1.5 bg-emerald-500 text-white text-xs font-semibold shadow-sm shadow-emerald-500/20">
-            Unread
-          </Badge>
-        )}
         {email.starred && (
           <Badge
             variant="outline"
-            className="rounded-md px-3 py-1.5 text-xs font-semibold border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300"
+            className="gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300"
           >
-            ⭐ Starred
+            <Star className="h-3.5 w-3.5 fill-current" />
+            Starred
           </Badge>
         )}
         {email.attachments.length > 0 && (
           <Badge
             variant="outline"
-            className="rounded-md px-3 py-1.5 text-xs font-semibold border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 text-zinc-700 dark:text-zinc-300"
+            className="gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 text-zinc-700 dark:text-zinc-300"
           >
-            📎 {email.attachments.length} attachment{email.attachments.length > 1 ? "s" : ""}
+            <Paperclip className="h-3.5 w-3.5" />
+            {email.attachments.length} attachment{email.attachments.length > 1 ? "s" : ""}
           </Badge>
         )}
       </div>

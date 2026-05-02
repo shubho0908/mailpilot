@@ -88,18 +88,18 @@ export function EmailDetail({ emailId, onBack }: EmailDetailProps) {
   }
 
   return (
-    <div className="py-6 sm:py-8">
-      <div className="max-w-6xl mx-auto px-2 sm:px-0">
+    <div className="py-4 sm:py-8">
+      <div className="mx-auto max-w-6xl px-3 sm:px-0">
         <Button
           onClick={onBack}
           variant="ghost"
-          className="mb-4 sm:mb-6 rounded-lg px-3 sm:px-5 transition-all duration-300 hover:scale-105 active:scale-95 text-xs sm:text-sm"
+          className="mb-4 ml-0 rounded-lg px-4 text-xs transition-all duration-300 hover:scale-105 active:scale-95 sm:mb-6 sm:ml-0 sm:px-5 sm:text-sm"
         >
           ← Back
         </Button>
 
-        <div className="relative bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl rounded-xl p-0.5 ring-1 ring-black/[0.02] dark:ring-white/[0.05] shadow-[0_2px_8px_-1px_rgba(0,0,0,0.04),0_1px_4px_-1px_rgba(0,0,0,0.03)] dark:shadow-[0_2px_8px_-1px_rgba(0,0,0,0.3),0_1px_4px_-1px_rgba(0,0,0,0.2)]">
-          <div className="bg-white dark:bg-zinc-900/80 rounded-lg p-4 sm:p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]">
+        <div className="relative overflow-hidden rounded-2xl bg-white/95 p-0.5 shadow-[0_12px_40px_-28px_rgba(16,185,129,0.45),0_2px_10px_-4px_rgba(0,0,0,0.12)] ring-1 ring-black/[0.04] backdrop-blur-xl dark:bg-zinc-900/95 dark:shadow-[0_12px_40px_-28px_rgba(16,185,129,0.35),0_2px_10px_-4px_rgba(0,0,0,0.5)] dark:ring-white/[0.07] sm:rounded-xl">
+          <div className="rounded-[calc(1rem-2px)] bg-white p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:bg-zinc-900/80 sm:rounded-lg sm:p-6">
             <EmailHeader
               email={email}
               threadMessages={threadMessages}
@@ -108,8 +108,8 @@ export function EmailDetail({ emailId, onBack }: EmailDetailProps) {
               onDelete={handleDelete}
             />
 
-            <div className="min-h-[200px] max-h-[600px] overflow-y-auto pr-2">
-              <div className="space-y-3">
+            <div className="min-h-[200px] overflow-x-hidden sm:max-h-[600px] sm:overflow-y-auto sm:pr-2">
+              <div className="space-y-4 sm:space-y-3">
                 {threadMessages.map((message) => (
                   <ThreadMessageCard
                     key={message.id}
