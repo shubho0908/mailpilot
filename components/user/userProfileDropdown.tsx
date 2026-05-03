@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { useApiKeyStatus, useCurrentUser } from "@/hooks/queries/use-user-profile";
+import { useCurrentUser } from "@/hooks/queries/use-user-profile";
 import { toast } from "sonner";
 import { Moon, Sun } from "lucide-react";
 import { ApiKeySetupModal } from "./apiKeySetupModal";
@@ -20,7 +20,6 @@ export function UserProfileDropdown() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const { setTheme, resolvedTheme } = useTheme();
   const { data: user, isLoading: isUserLoading } = useCurrentUser();
-  const { data: apiKeyStatus } = useApiKeyStatus(Boolean(user));
 
   const handleSignOut = async () => {
     try {
@@ -72,16 +71,6 @@ export function UserProfileDropdown() {
             <p className="text-xs leading-none text-zinc-500 dark:text-zinc-400">{user.email}</p>
           </div>
           <DropdownMenuSeparator />
-          {apiKeyStatus?.apiKey && (
-            <>
-              <div className="p-2">
-                <p className="text-sm font-mono text-zinc-600 dark:text-zinc-400">
-                  {apiKeyStatus.apiKey}
-                </p>
-              </div>
-              <DropdownMenuSeparator />
-            </>
-          )}
           <DropdownMenuItem onClick={() => setIsEditModalOpen(true)} className="cursor-pointer">
             Edit API Key
           </DropdownMenuItem>

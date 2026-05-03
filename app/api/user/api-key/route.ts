@@ -3,60 +3,11 @@ import { getCurrentSession, handleAuthError } from "@/lib/auth-session";
 import { db } from "@/db";
 import { user } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { encrypt, decrypt, maskApiKey } from "@/lib/crypto";
+import { encrypt, decrypt } from "@/lib/crypto";
 import { assertSameOrigin } from "@/lib/request-auth";
 import { createLogger } from "@/lib/logger";
 
 const logger = createLogger("api:user:api-key");
-
-export async function GET() {
-  try {
-    const session = await getCurrentSession();
-
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const currentUser = await db.query.user.findFirst({
-      where: eq(user.id, session.user.id),
-      columns: {
-        openaiApiKey: true,
-      },
-    });
-
-    if (!currentUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    const encryptedKey = currentUser.openaiApiKey;
-    let maskedKey = null;
-
-    if (encryptedKey) {
-      try {
-        const decryptedKey = decrypt(encryptedKey);
-        maskedKey = maskApiKey(decryptedKey);
-      } catch (error) {
-        logger.warn("Failed to decrypt stored OpenAI API key for masking", {
-          error,
-        });
-        maskedKey = "***";
-      }
-    }
-
-    return NextResponse.json({
-      apiKey: maskedKey,
-      hasApiKey: !!encryptedKey,
-    });
-  } catch (error) {
-    const authError = handleAuthError(error);
-    if (authError.status !== 500) {
-      return authError;
-    }
-
-    logger.error("Failed to fetch OpenAI API key status", error);
-    return NextResponse.json({ error: "Failed to fetch API key" }, { status: 500 });
-  }
-}
 
 export async function POST(request: Request) {
   try {

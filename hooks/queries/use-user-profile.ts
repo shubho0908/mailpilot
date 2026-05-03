@@ -9,11 +9,6 @@ export interface UserProfile {
   hasApiKey: boolean;
 }
 
-interface ApiKeyStatus {
-  apiKey: string | null;
-  hasApiKey: boolean;
-}
-
 async function fetchJson<T>(url: string): Promise<T | null> {
   const response = await fetch(url, { cache: "no-store" });
 
@@ -32,16 +27,6 @@ export function useCurrentUser() {
   return useQuery({
     queryKey: queryKeys.user.me(),
     queryFn: () => fetchJson<UserProfile>("/api/user/me"),
-    staleTime: 60 * 1000,
-    retry: false,
-  });
-}
-
-export function useApiKeyStatus(enabled = true) {
-  return useQuery({
-    queryKey: queryKeys.user.apiKey(),
-    queryFn: () => fetchJson<ApiKeyStatus>("/api/user/api-key"),
-    enabled,
     staleTime: 60 * 1000,
     retry: false,
   });

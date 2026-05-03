@@ -85,11 +85,3 @@ export function decrypt(encryptedHex: string): string {
 
   return plaintext;
 }
-
-export function maskApiKey(apiKey: string): string {
-  if (!apiKey || apiKey.length < 6) {
-    return "***";
-  }
-  const asteriskCount = Math.min(apiKey.length - 6, 6);
-  return `${apiKey.slice(0, 3)}${"*".repeat(asteriskCount)}${apiKey.slice(-3)}`;
-}
