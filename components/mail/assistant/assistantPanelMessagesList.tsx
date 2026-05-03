@@ -41,13 +41,13 @@ export function AssistantPanelMessagesList({
     <div className="space-y-4">
       {messages.length === 0 && !error && (
         <div className="flex flex-col items-center justify-center py-6 text-center">
-          <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-zinc-100 dark:bg-zinc-800 mb-3">
-            <MessageSquare className="w-6 h-6 text-zinc-400" />
+          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl border border-[var(--app-border)] bg-[var(--app-soft)] shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+            <MessageSquare className="h-6 w-6 text-[var(--app-text-faint)]" strokeWidth={1.7} />
           </div>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-1">
+          <p className="mb-1 text-sm font-medium text-[var(--app-text)]">
             Ask me to operate your mailbox
           </p>
-          <p className="text-xs text-zinc-500 dark:text-zinc-500 max-w-64">
+          <p className="max-w-64 text-xs leading-relaxed text-[var(--app-text-muted)]">
             Try &quot;show unread emails this week&quot; or &quot;send john@example.com a meeting
             note&quot;.
           </p>
@@ -76,13 +76,13 @@ export function AssistantPanelMessagesList({
 
       {isThinking && (
         <div className="flex gap-3 justify-start">
-          <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex-shrink-0">
-            <MessageSquare className="w-3.5 h-3.5 text-white" />
+          <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-[var(--app-accent)]">
+            <MessageSquare className="h-3.5 w-3.5 text-[var(--app-bg)]" strokeWidth={1.7} />
           </div>
-          <div className="bg-zinc-100 dark:bg-zinc-800 rounded-xl px-3 py-2.5">
+          <div className="rounded-xl border border-[var(--app-border)] bg-[var(--app-panel)] px-3 py-2.5">
             <div className="flex items-center gap-1">
-              <Loader2 className="w-4 h-4 animate-spin text-zinc-500" />
-              <span className="text-xs text-zinc-500 dark:text-zinc-400">Planning</span>
+              <Loader2 className="h-4 w-4 animate-spin text-[var(--app-text-faint)]" />
+              <span className="text-xs text-[var(--app-text-muted)]">Planning</span>
             </div>
           </div>
         </div>

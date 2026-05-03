@@ -1,258 +1,156 @@
 import { z } from "zod";
-import { getEmail, listEmailsPage } from "@/services/gmail/gmail.service";
 import type { Email, GmailAuth } from "@/services/gmail/gmail.types";
 import {
-  composeModeSchema,
-  isInboxView,
-  isSentView,
-  mailLabelByView,
-  mailViewSchema,
-  pathForMailRoute,
-} from "@/lib/mail/types";
-import {
   assistantResponseSchema,
-  type AssistantComposeDraft,
-  type AssistantFilters,
+  assistantPlanSchema,
+  type AssistantPlanStep,
   type AssistantResponse,
   type AssistantUiAction,
-  assistantCommandSchema,
-  assistantRequestSchema,
+  AssistantCommandType,
 } from "@/lib/assistant/actions";
-import { normalizeInclusiveDateRange } from "@/lib/mail/date-range";
+import {
+  handleFilterCommand,
+  handleOpenEmailCommand,
+  handleComposeCommand,
+  handleReplyCommand,
+  handleForwardEmailsCommand,
+  handleNavigateCommand,
+  handleClearFiltersCommand,
+  handleDeleteCommand,
+  type CommandHandlerContext,
+  type CommandHandlerResult,
+} from "./command-handlers";
+import { type AssistantContext, type RequestedPosition } from "./command-utils";
 
-function isEmailAddress(value: string | null | undefined): value is string {
-  return Boolean(value && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value));
-}
+const ORDINAL_WORDS = new Map<string, number>([
+  ["first", 1],
+  ["one", 1],
+  ["latest", 1],
+  ["newest", 1],
+  ["top", 1],
+  ["second", 2],
+  ["two", 2],
+  ["third", 3],
+  ["three", 3],
+  ["fourth", 4],
+  ["four", 4],
+  ["fifth", 5],
+  ["five", 5],
+  ["sixth", 6],
+  ["six", 6],
+  ["seventh", 7],
+  ["seven", 7],
+  ["eighth", 8],
+  ["eight", 8],
+  ["ninth", 9],
+  ["nine", 9],
+  ["tenth", 10],
+  ["ten", 10],
+]);
 
-function previewEmail(email: Email) {
-  return {
-    id: email.id,
-    fromName: email.from.name || email.from.email,
-    fromEmail: email.from.email,
-    subject: email.subject || "(no subject)",
-    snippet: email.snippet || "",
-    date: new Date(email.date).toISOString(),
-    unread: email.unread,
-  };
-}
+function parseRequestedPosition(message?: string | null): RequestedPosition | undefined {
+  if (!message) return undefined;
 
-function textFromEmail(email: Email) {
-  return email.body || email.htmlBody?.replace(/<[^>]*>/g, "") || "";
-}
-
-function buildReplyDraft(
-  email: Email,
-  body?: string | null,
-  cc?: string | null,
-  bcc?: string | null
-): AssistantComposeDraft {
-  const subject = email.subject.startsWith("Re:") ? email.subject : `Re: ${email.subject}`;
-  const references = Array.from(
-    new Set([...((email.references || []) as string[]), email.messageId])
-  ).filter((reference): reference is string => Boolean(reference));
-  const original = [
-    "",
-    "",
-    "--- Original Message ---",
-    `From: ${email.from.name || email.from.email}`,
-    `Date: ${new Date(email.date).toLocaleString()}`,
-    `To: ${email.to.map((recipient) => recipient.email).join(", ")}`,
-    `Subject: ${email.subject}`,
-    "",
-    textFromEmail(email),
-  ].join("\n");
-
-  return {
-    to: email.from.email,
-    cc: cc || undefined,
-    bcc: bcc || undefined,
-    subject,
-    body: `${body?.trim() ? `${body.trim()}\n` : ""}${original}`,
-    mode: composeModeSchema.enum.reply,
-    threadId: email.threadId,
-    inReplyTo: email.messageId,
-    references: references.length ? references : undefined,
-  };
-}
-
-function normalizeFilters(
-  command: Extract<z.infer<typeof assistantCommandSchema>["command"], { type: "filter" }>
-): AssistantFilters {
-  const normalized: AssistantFilters = {
-    search: command.search ?? "",
-    sender: null,
-    dateFrom: command.dateFrom ?? null,
-    dateTo: command.dateTo ?? null,
-    unread: command.unread ?? null,
-    maxResults: command.maxResults ?? null,
-  };
-
-  if (isEmailAddress(command.sender)) {
-    normalized.sender = command.sender;
-  } else if (command.sender != null) {
-    normalized.search = [normalized.search, command.sender].filter(Boolean).join(" ");
+  const text = message.toLowerCase();
+  if (
+    /\b(oldest|bottom)\b/.test(text) ||
+    /\blast\s+(?:one|email|message|item|result)\b/.test(text)
+  ) {
+    return "last";
   }
 
-  return normalized;
+  for (const [word, position] of ORDINAL_WORDS) {
+    if (new RegExp(`\\b${word}\\b`).test(text)) return position;
+  }
+
+  const numericMatch =
+    text.match(/\b(\d{1,2})(?:st|nd|rd|th)\b/) ||
+    text.match(/\b(?:open|select|choose|show|view|go to)\s+(?:the\s+)?(\d{1,2})\b/) ||
+    text.match(/\b(?:result|email|message|item|number|#)\s*(\d{1,2})\b/) ||
+    text.match(/\b(\d{1,2})\s+(?:one|email|message|item|result)\b/);
+  if (!numericMatch) return undefined;
+
+  const position = Number.parseInt(numericMatch[1], 10);
+  return position > 0 ? position : undefined;
+}
+
+function requestedPosition(command: AssistantPlanStep, context: AssistantContext) {
+  return command.resultIndex ?? parseRequestedPosition(context.latestUserMessage);
 }
 
 async function resolveCommand(
-  commandResult: z.infer<typeof assistantCommandSchema>,
-  context: z.infer<typeof assistantRequestSchema>["context"],
+  commandResult: z.infer<typeof assistantPlanSchema>,
+  context: AssistantContext,
   auth: GmailAuth
 ): Promise<AssistantResponse> {
   const actions: AssistantUiAction[] = [];
-  const previews: AssistantResponse["previews"] = [];
-  const command = commandResult.command;
+  const previews: NonNullable<AssistantResponse["previews"]> = [];
+  const previewIds = new Set<string>();
+  let previousEmails: Email[] = [];
+  const mutableContext = { ...context };
 
-  if (command.type === "filter") {
-    const view = command.view ?? mailViewSchema.enum.inbox;
-    const filters = normalizeFilters(command);
-    const dateRange = normalizeInclusiveDateRange({
-      dateFrom: filters.dateFrom,
-      dateTo: filters.dateTo,
-    });
-    actions.push({ type: "setFilters", view, filters });
+  const ctx: CommandHandlerContext = {
+    actions,
+    previews,
+    previewIds,
+    addPreview: (preview) => {
+      if (previewIds.has(preview.id)) return;
+      previewIds.add(preview.id);
+      previews.push(preview);
+    },
+    previousEmails,
+    mutableContext,
+    auth,
+  };
 
-    const result = await listEmailsPage(auth, {
-      filters: {
-        label: mailLabelByView[view],
-        query: filters.search ?? undefined,
-        from: isInboxView(view) ? (filters.sender ?? undefined) : undefined,
-        to: isSentView(view) ? (filters.sender ?? undefined) : undefined,
-        after: dateRange.after,
-        before: dateRange.before,
-        unread: filters.unread ?? undefined,
-      },
-      maxResults: filters.maxResults ?? 5,
-    });
+  for (const command of commandResult.steps) {
+    ctx.previousEmails = previousEmails;
 
-    previews.push(...result.emails.slice(0, 5).map(previewEmail));
-    return assistantResponseSchema.parse({
-      message: commandResult.response,
-      actions,
-      previews,
-    });
-  }
+    let result: CommandHandlerResult;
 
-  if (command.type === "openEmail") {
-    const view = command.view ?? mailViewSchema.enum.inbox;
-    const senderIsEmail = isEmailAddress(command.sender);
-    const query = [!senderIsEmail ? command.sender : null, command.keyword, command.subject]
-      .filter(Boolean)
-      .join(" ");
-
-    const result = await listEmailsPage(auth, {
-      filters: {
-        label: mailLabelByView[view],
-        from: isInboxView(view) && senderIsEmail ? (command.sender ?? undefined) : undefined,
-        to: isSentView(view) && senderIsEmail ? (command.sender ?? undefined) : undefined,
-        query: query ?? undefined,
-        unread: command.unread ?? undefined,
-      },
-      maxResults: 5,
-    });
-
-    const email = result.emails[0];
-    if (!email) {
-      return assistantResponseSchema.parse({
-        message: "I could not find a matching email in your mailbox.",
-        actions: [],
-        previews: [],
-      });
+    switch (command.type) {
+      case AssistantCommandType.Filter:
+        result = await handleFilterCommand(command, ctx);
+        break;
+      case AssistantCommandType.OpenEmail:
+        result = await handleOpenEmailCommand(command, ctx, requestedPosition);
+        break;
+      case AssistantCommandType.Compose:
+        result = handleComposeCommand(command, ctx);
+        break;
+      case AssistantCommandType.Reply:
+        result = await handleReplyCommand(command, ctx);
+        break;
+      case AssistantCommandType.ForwardEmails:
+        result = await handleForwardEmailsCommand(command, ctx, requestedPosition);
+        break;
+      case AssistantCommandType.Navigate:
+        result = handleNavigateCommand(command, ctx);
+        break;
+      case AssistantCommandType.ClearFilters:
+        result = handleClearFiltersCommand(command, ctx);
+        break;
+      case AssistantCommandType.Answer:
+        continue;
+      case AssistantCommandType.Delete:
+        result = handleDeleteCommand(command, ctx);
+        break;
+      default:
+        const _exhaustiveCheck: never = command.type;
+        throw new Error(`Unknown command type: ${_exhaustiveCheck}`);
     }
 
-    actions.push({
-      type: "openEmail",
-      view: command.view ?? mailViewSchema.enum.inbox,
-      emailId: email.id,
-    });
-    previews.push(previewEmail(email));
-
-    return assistantResponseSchema.parse({
-      message: commandResult.response,
-      actions,
-      previews,
-    });
-  }
-
-  if (command.type === "compose") {
-    const shouldSend = command.shouldSend ?? false;
-    actions.push({ type: "navigate", path: pathForMailRoute("compose") });
-    actions.push({
-      type: "composeDraft",
-      draft: {
-        to: command.draft.to,
-        cc: command.draft.cc || undefined,
-        bcc: command.draft.bcc || undefined,
-        subject: command.draft.subject,
-        body: command.draft.body,
-        mode: composeModeSchema.enum.compose,
-      },
-      requiresApproval: shouldSend,
-      approvalPrompt: shouldSend ? `Send this email to ${command.draft.to}?` : undefined,
-    });
-
-    return assistantResponseSchema.parse({
-      message: commandResult.response,
-      actions,
-      previews,
-    });
-  }
-
-  if (command.type === "reply") {
-    if (!context.openEmailId) {
-      return assistantResponseSchema.parse({
-        message: "Open an email first, then I can prepare a reply in the compose view.",
-        actions: [],
-        previews: [],
-      });
+    if (result.earlyResponse) {
+      return result.earlyResponse;
     }
 
-    const email = await getEmail(auth, context.openEmailId);
-    const draft = buildReplyDraft(email, command.body, command.cc, command.bcc);
-    const shouldSend = command.shouldSend ?? false;
-    actions.push({ type: "navigate", path: pathForMailRoute("compose") });
-    actions.push({
-      type: "composeDraft",
-      draft,
-      requiresApproval: shouldSend,
-      approvalPrompt: shouldSend ? `Send this reply to ${draft.to}?` : undefined,
-    });
-
-    return assistantResponseSchema.parse({
-      message: commandResult.response,
-      actions,
-      previews: [previewEmail(email)],
-    });
-  }
-
-  if (command.type === "navigate") {
-    actions.push({ type: "navigate", path: pathForMailRoute(command.view) });
-  }
-
-  if (command.type === "clearFilters") {
-    actions.push({
-      type: "clearFilters",
-      view: command.view ?? context.currentView ?? mailViewSchema.enum.inbox,
-    });
-  }
-
-  if (command.type === "delete") {
-    if (!context.openEmailId) {
-      return assistantResponseSchema.parse({
-        message: "Open an email first, then I can delete it.",
-        actions: [],
-        previews: [],
-      });
+    if (!result.shouldContinue) {
+      break;
     }
 
-    actions.push({
-      type: "deleteEmail",
-      emailId: context.openEmailId,
-      requiresApproval: true,
-      approvalPrompt: "Delete this email?",
-    });
+    if (result.previousEmails) {
+      previousEmails = result.previousEmails;
+    }
   }
 
   return assistantResponseSchema.parse({

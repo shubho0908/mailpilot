@@ -23,7 +23,6 @@ export function EmailHeader({
 }: EmailHeaderProps) {
   return (
     <div className="mb-5 border-b border-zinc-200/60 pb-5 dark:border-zinc-800/60 sm:mb-6 sm:pb-6">
-      {/* Subject Section */}
       <div className="mb-5 sm:mb-6">
         <div className="flex flex-col gap-2">
           <h1 className="break-words text-[1.65rem] font-semibold leading-[1.08] tracking-[-0.035em] text-zinc-900 dark:text-zinc-50 sm:text-3xl">
@@ -37,13 +36,10 @@ export function EmailHeader({
         </div>
       </div>
 
-      {/* Main Header Content */}
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
-        {/* Left: Sender Info */}
         <div className="flex min-w-0 flex-1 items-start gap-3.5 sm:gap-4">
-          {/* Avatar */}
           <div className="relative flex-shrink-0">
-            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 p-0.5 shadow-lg shadow-emerald-500/20 sm:h-14 sm:w-14">
+            <div className="h-12 w-12 rounded-lg bg-[var(--app-accent)] p-0.5 sm:h-14 sm:w-14">
               <div className="flex h-full w-full items-center justify-center rounded-lg bg-white dark:bg-zinc-800">
                 <span className="text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-xl">
                   {(email.from.name || email.from.email).charAt(0).toUpperCase()}
@@ -52,7 +48,6 @@ export function EmailHeader({
             </div>
           </div>
 
-          {/* Sender Details */}
           <div className="min-w-0 flex-1 pt-0.5">
             <div className="mb-1 flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-2">
               <h2 className="text-base font-semibold tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-lg">
@@ -77,7 +72,6 @@ export function EmailHeader({
           </div>
         </div>
 
-        {/* Right: Action Buttons */}
         <div className="flex w-full items-center gap-2 lg:w-auto lg:flex-shrink-0">
           <div className="flex w-full flex-nowrap items-center gap-2 sm:w-auto">
             <Button
@@ -110,7 +104,6 @@ export function EmailHeader({
         </div>
       </div>
 
-      {/* Badges */}
       <div className="mt-5 flex flex-wrap gap-2">
         {threadMessages.length > 1 && (
           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">

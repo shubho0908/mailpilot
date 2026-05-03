@@ -13,15 +13,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Invalid email ID" }, { status: 400 });
     }
 
-    const { auth, userId } = await requireGmailAuth(request.headers);
+    const { auth } = await requireGmailAuth(request.headers);
     const email = await getEmail(auth, id);
     const thread = await getEmailThread(auth, email.threadId);
     const currentEmail = thread.messages.find((message) => message.id === id) || email;
 
     logger.info("Successfully fetched email thread", {
-      userId,
-      emailId: id,
-      threadId: thread.id,
       messageCount: thread.messages.length,
     });
 

@@ -77,7 +77,7 @@ export function useMailRealtime() {
 
       pollingFallbackRef.current = setInterval(() => {
         refreshMailQueries().catch((error) => {
-          console.error("[Realtime] Polling fallback refresh failed", error);
+          setError(error instanceof Error ? error.message : "Realtime sync polling failed");
         });
       }, POLLING_FALLBACK_INTERVAL_MS);
     }
@@ -116,7 +116,6 @@ export function useMailRealtime() {
         };
 
         eventSourceRef.current.onerror = () => {
-          console.error("[Realtime] SSE connection failed");
           if (!disposed) {
             setStatus(SyncStatus.Partial);
             setError("Realtime sync connection failed");
@@ -151,8 +150,7 @@ export function useMailRealtime() {
 
             refreshMailQueries()
               .catch((error) => {
-                console.error("[Realtime] Failed to refresh mail queries", error);
-                setError("Realtime sync refresh failed");
+                setError(error instanceof Error ? error.message : "Realtime sync refresh failed");
               })
               .finally(() => {
                 if (!disposed) {
@@ -160,7 +158,7 @@ export function useMailRealtime() {
                 }
               });
           } catch (error) {
-            console.error("[Realtime] Failed to process SSE message", error);
+            setError(error instanceof Error ? error.message : "Realtime sync event parsing failed");
           }
         };
       } catch (error) {

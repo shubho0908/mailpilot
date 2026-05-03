@@ -5,6 +5,9 @@ import { user } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { encrypt, decrypt, maskApiKey } from "@/lib/crypto";
 import { assertSameOrigin } from "@/lib/request-auth";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("api:user:api-key");
 
 export async function GET() {
   try {
@@ -33,7 +36,9 @@ export async function GET() {
         const decryptedKey = decrypt(encryptedKey);
         maskedKey = maskApiKey(decryptedKey);
       } catch (error) {
-        console.error("Error decrypting API key:", error);
+        logger.warn("Failed to decrypt stored OpenAI API key for masking", {
+          error,
+        });
         maskedKey = "***";
       }
     }
@@ -48,7 +53,7 @@ export async function GET() {
       return authError;
     }
 
-    console.error("Error fetching API key:", error);
+    logger.error("Failed to fetch OpenAI API key status", error);
     return NextResponse.json({ error: "Failed to fetch API key" }, { status: 500 });
   }
 }
@@ -70,11 +75,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid API key" }, { status: 400 });
     }
 
-    if (!apiKey.startsWith("sk-") || apiKey.length > 512) {
+    if (!apiKey.startsWith("sk-") || apiKey.length < 20 || apiKey.length > 512) {
       return NextResponse.json({ error: "Invalid OpenAI API key format" }, { status: 400 });
     }
 
     const encryptedKey = encrypt(apiKey);
+
+    try {
+      const decryptedKey = decrypt(encryptedKey);
+      if (decryptedKey !== apiKey) {
+        return NextResponse.json({ error: "Failed to securely store API key" }, { status: 500 });
+      }
+    } catch (error) {
+      logger.error("OpenAI API key encryption round-trip failed", error);
+      return NextResponse.json({ error: "Failed to securely store API key" }, { status: 500 });
+    }
 
     await db.update(user).set({ openaiApiKey: encryptedKey }).where(eq(user.id, session.user.id));
 
@@ -85,7 +100,7 @@ export async function POST(request: Request) {
       return authError;
     }
 
-    console.error("Error setting API key:", error);
+    logger.error("Failed to set OpenAI API key", error);
     return NextResponse.json({ error: "Failed to set API key" }, { status: 500 });
   }
 }

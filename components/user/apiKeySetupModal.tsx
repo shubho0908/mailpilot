@@ -36,7 +36,6 @@ export function ApiKeySetupModal({ open, onOpenChange, onComplete }: ApiKeySetup
       onComplete();
       onOpenChange(false);
     } catch (error) {
-      console.error("Error saving API key:", error);
       toast.error(error instanceof Error ? error.message : "Failed to save API key");
     }
   };

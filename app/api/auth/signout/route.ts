@@ -3,6 +3,9 @@ import type { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { getCurrentSession, handleAuthError } from "@/lib/auth-session";
 import { assertSameOrigin } from "@/lib/request-auth";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("api:auth:signout");
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,7 +26,7 @@ export async function POST(request: NextRequest) {
       return authError;
     }
 
-    console.error("Error signing out:", error);
+    logger.error("Failed to sign out", error);
     return NextResponse.json({ error: "Failed to sign out" }, { status: 500 });
   }
 }

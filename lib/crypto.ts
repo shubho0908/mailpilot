@@ -28,6 +28,10 @@ function getEncryptionKey(): Buffer {
 }
 
 export function encrypt(plaintext: string): string {
+  if (!plaintext || plaintext.length === 0) {
+    throw new Error("Cannot encrypt empty plaintext");
+  }
+
   const key = getEncryptionKey();
   const salt = crypto.randomBytes(SALT_LENGTH);
   const iv = crypto.randomBytes(IV_LENGTH);
@@ -47,6 +51,10 @@ export function encrypt(plaintext: string): string {
 }
 
 export function decrypt(encryptedHex: string): string {
+  if (!encryptedHex || encryptedHex.length === 0) {
+    throw new Error("Cannot decrypt empty encrypted payload");
+  }
+
   const key = getEncryptionKey();
   const minimumHexLength = (SALT_LENGTH + IV_LENGTH + TAG_LENGTH) * 2;
 
@@ -69,7 +77,13 @@ export function decrypt(encryptedHex: string): string {
   let decrypted = decipher.update(encrypted);
   decrypted = Buffer.concat([decrypted, decipher.final()]);
 
-  return decrypted.toString("utf8");
+  const plaintext = decrypted.toString("utf8");
+
+  if (!plaintext || plaintext.length === 0) {
+    throw new Error("Decryption resulted in empty plaintext");
+  }
+
+  return plaintext;
 }
 
 export function maskApiKey(apiKey: string): string {

@@ -37,7 +37,7 @@ export function broadcastMailEvent(event: MailChangedEvent) {
     try {
       controller.enqueue(message);
     } catch (error) {
-      logger.error("Failed to broadcast mail event", { userId: event.userId, error });
+      logger.error("Failed to broadcast mail event", { error });
       userClients.delete(controller);
     }
   }

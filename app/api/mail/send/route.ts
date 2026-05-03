@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       references,
     } = validationResult.data;
 
-    const { auth, userId } = await requireGmailAuth(request.headers);
+    const { auth } = await requireGmailAuth(request.headers);
 
     const toList = Array.isArray(to) ? to : [to];
     const payload: SendEmailPayload = {
@@ -53,9 +53,7 @@ export async function POST(request: NextRequest) {
     const messageId = await sendEmail(auth, payload);
 
     logger.info("Successfully sent email", {
-      userId,
-      messageId,
-      to: toList.length,
+      recipientCount: toList.length,
     });
 
     return NextResponse.json({ messageId }, { status: 201 });

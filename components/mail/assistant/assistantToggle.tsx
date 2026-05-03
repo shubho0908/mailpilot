@@ -9,9 +9,10 @@ import { useCurrentUser } from "@/hooks/queries/use-user-profile";
 
 interface AssistantToggleProps {
   className?: string;
+  onPanelOpen?: () => void;
 }
 
-export function AssistantToggle({ className }: AssistantToggleProps = {}) {
+export function AssistantToggle({ className, onPanelOpen }: AssistantToggleProps = {}) {
   const { isOpen, togglePanel } = useAssistantStore();
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const { data: user, isLoading } = useCurrentUser();
@@ -25,6 +26,9 @@ export function AssistantToggle({ className }: AssistantToggleProps = {}) {
     }
 
     togglePanel();
+    if (!isOpen && onPanelOpen) {
+      onPanelOpen();
+    }
   };
 
   return (

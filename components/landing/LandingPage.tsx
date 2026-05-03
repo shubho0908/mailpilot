@@ -1,6 +1,5 @@
 import { SignInButton } from "@/components/auth/SignInButton";
 import {
-  actionLinks,
   featurePanels,
   footerLinks,
   navItems,
@@ -38,7 +37,11 @@ function LandingNav() {
         aria-label="Main navigation"
         className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8"
       >
-        <a href="#content" className="group flex items-center gap-3 cursor-pointer" aria-label="MailPilot home">
+        <a
+          href="#content"
+          className="group flex items-center gap-3 cursor-pointer"
+          aria-label="MailPilot home"
+        >
           <span className="grid size-8 place-items-center rounded-md border border-[var(--landing-border)] bg-[var(--landing-soft)] transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:-translate-y-0.5">
             <Mail
               className="size-4 text-[var(--landing-accent)]"
@@ -74,10 +77,7 @@ function LandingNav() {
 
 function HeroSection() {
   return (
-    <section
-      id="content"
-      className="landing-grid-bg relative scroll-mt-[65px] md:scroll-mt-0"
-    >
+    <section id="content" className="landing-grid-bg relative scroll-mt-[65px] md:scroll-mt-0">
       <div className="mx-auto grid min-h-[calc(100dvh-65px)] max-w-[1680px] grid-cols-1 items-center gap-12 px-[clamp(1.5rem,5vw,6rem)] py-16 md:py-24 xl:grid-cols-[minmax(340px,0.72fr)_minmax(740px,1.28fr)] xl:gap-16">
         <div className="landing-reveal max-w-4xl space-y-7">
           <p className="max-w-2xl text-sm font-medium leading-6 text-[var(--landing-accent)]">
@@ -88,7 +88,8 @@ function HeroSection() {
               Your inbox, operated by AI.
             </h1>
             <p className="max-w-xl text-pretty text-base leading-7 text-[var(--landing-muted)] sm:text-lg">
-              MailPilot operates Gmail for you — finding threads, changing views, opening compose, and preparing replies. Every important action waits for your approval.
+              MailPilot operates Gmail for you — finding threads, changing views, opening compose,
+              and preparing replies. Every important action waits for your approval.
             </p>
           </div>
 
@@ -111,7 +112,8 @@ function HeroSection() {
           </div>
 
           <p className="max-w-xl border-l border-[var(--landing-border-strong)] pl-4 text-sm leading-6 text-[var(--landing-faint)]">
-            Not a chatbot. A visible agent that operates the UI, handles the busywork, and leaves the final call to you.
+            Not a chatbot. A visible agent that operates the UI, handles the busywork, and leaves
+            the final call to you.
           </p>
         </div>
 
@@ -235,9 +237,7 @@ function LandingFooter() {
   return (
     <footer className="border-t border-[var(--landing-border)] px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-7xl flex-col gap-4 text-sm text-[var(--landing-muted)] sm:flex-row sm:flex-wrap sm:items-baseline sm:justify-between">
-        <p>
-          MailPilot lets AI operate your email. Every important action stays reviewable.
-        </p>
+        <p>MailPilot lets AI operate your email. Every important action stays reviewable.</p>
         <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
           {footerLinks.map((link) => (
             <a

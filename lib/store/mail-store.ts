@@ -8,6 +8,7 @@ import {
   type MailFilters,
   type MailRoute,
 } from "@/lib/mail/types";
+import type { AssistantEmailListContext } from "@/lib/assistant/actions";
 
 interface ComposeState {
   initialTo?: string;
@@ -26,6 +27,7 @@ interface MailState {
   openEmailId: string | null;
   filters: MailFilters;
   composeState: ComposeState | null;
+  emailListContext: AssistantEmailListContext | null;
 }
 
 interface MailActions {
@@ -35,6 +37,7 @@ interface MailActions {
   clearFilters: () => void;
   resetToInbox: () => void;
   setComposeState: (state: ComposeState | null) => void;
+  setEmailListContext: (context: AssistantEmailListContext | null) => void;
   openCompose: (state?: ComposeState) => void;
   openReply: (
     to: string,
@@ -49,11 +52,34 @@ interface MailActions {
 
 type MailStore = MailState & MailActions;
 
+function emailListContextsEqual(
+  left: AssistantEmailListContext | null,
+  right: AssistantEmailListContext | null
+) {
+  if (left === right) return true;
+  if (!left || !right) return false;
+  if (
+    left.source !== right.source ||
+    left.pathname !== right.pathname ||
+    left.view !== right.view ||
+    left.capturedAt !== right.capturedAt ||
+    left.emails.length !== right.emails.length
+  ) {
+    return false;
+  }
+
+  return left.emails.every((email, index) => {
+    const other = right.emails[index];
+    return other?.id === email.id && other.position === email.position;
+  });
+}
+
 const initialState: MailState = {
   currentView: mailRouteSchema.enum.inbox,
   openEmailId: null,
   filters: emptyMailFilters,
   composeState: null,
+  emailListContext: null,
 };
 
 export const useMailStore = create<MailStore>()(
@@ -61,13 +87,27 @@ export const useMailStore = create<MailStore>()(
     (set) => ({
       ...initialState,
       setCurrentView: (view) =>
-        set({ currentView: view, openEmailId: null, composeState: null }, false, "setCurrentView"),
+        set(
+          { currentView: view, openEmailId: null, composeState: null, emailListContext: null },
+          false,
+          "setCurrentView"
+        ),
       setOpenEmailId: (id) => set({ openEmailId: id }, false, "setOpenEmailId"),
       setFilters: (filters) =>
         set((state) => ({ filters: { ...state.filters, ...filters } }), false, "setFilters"),
-      clearFilters: () => set({ filters: initialState.filters }, false, "clearFilters"),
+      clearFilters: () =>
+        set({ filters: initialState.filters, emailListContext: null }, false, "clearFilters"),
       resetToInbox: () => set(initialState, false, "resetToInbox"),
       setComposeState: (composeState) => set({ composeState }, false, "setComposeState"),
+      setEmailListContext: (emailListContext) =>
+        set(
+          (state) =>
+            emailListContextsEqual(state.emailListContext, emailListContext)
+              ? state
+              : { emailListContext },
+          false,
+          "setEmailListContext"
+        ),
       openCompose: (composeState) =>
         set(
           { currentView: mailRouteSchema.enum.compose, composeState: composeState || null },

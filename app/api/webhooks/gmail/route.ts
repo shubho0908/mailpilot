@@ -155,10 +155,7 @@ export async function POST(request: NextRequest) {
       .limit(1);
 
     if (!syncState) {
-      logger.warn("Received Gmail webhook for an unknown mailbox", {
-        emailAddress: pushData.emailAddress,
-        historyId: pushData.historyId,
-      });
+      logger.warn("Received Gmail webhook for an unknown mailbox");
       return NextResponse.json({ ok: true, ignored: true });
     }
 
@@ -166,12 +163,7 @@ export async function POST(request: NextRequest) {
     const now = new Date();
 
     if (compareHistoryIds(pushData.historyId, syncState.historyId) <= 0) {
-      logger.info("Ignored duplicate or stale Gmail webhook", {
-        userId: syncState.userId,
-        emailAddress: pushData.emailAddress,
-        storedHistoryId: syncState.historyId,
-        notificationHistoryId: pushData.historyId,
-      });
+      logger.info("Ignored duplicate or stale Gmail webhook");
       return NextResponse.json({ ok: true, ignored: true });
     }
 
@@ -191,9 +183,6 @@ export async function POST(request: NextRequest) {
       });
 
       logger.info("Processed Gmail webhook", {
-        userId: syncState.userId,
-        emailAddress: pushData.emailAddress,
-        historyId: latestHistoryId,
         changedMessages: changes.messageIds.length,
         addedMessages: changes.addedMessageIds.length,
       });
@@ -209,12 +198,7 @@ export async function POST(request: NextRequest) {
         fullRefresh: true,
       });
 
-      logger.error("Gmail history sync failed; requested full client refresh", error, {
-        userId: syncState.userId,
-        emailAddress: pushData.emailAddress,
-        previousHistoryId: syncState.historyId,
-        notificationHistoryId: pushData.historyId,
-      });
+      logger.error("Gmail history sync failed; requested full client refresh", error);
 
       return NextResponse.json({ ok: true, fullRefresh: true });
     }

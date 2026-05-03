@@ -98,7 +98,6 @@ export function EmailHtmlFrame({ html, title }: EmailHtmlFrameProps) {
     const frameDocument = iframeRef.current?.contentDocument;
     if (!frameDocument) return;
 
-    // Enable scrolling within the iframe for long content
     frameDocument.documentElement.style.overflowY = "auto";
     if (frameDocument.body) {
       frameDocument.body.style.overflowY = "auto";

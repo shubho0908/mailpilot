@@ -3,12 +3,22 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { z } from "zod";
 import { createLogger } from "@/lib/logger";
 import { requireEnv } from "@/lib/env";
-import { assistantCommandSchema, assistantRequestSchema } from "@/lib/assistant/actions";
+import {
+  assistantPlanSchema,
+  assistantRequestSchema,
+  assistantStructuredPlanSchema,
+  normalizeStructuredAssistantPlan,
+} from "@/lib/assistant/actions";
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
 const logger = createLogger("assistant:command-generator");
 const ASSISTANT_MODEL = requireEnv("OPENAI_MODEL");
+
+function formatRecipients(to?: { name: string; email: string }[]) {
+  if (!to?.length) return "";
+  return to.map((recipient) => recipient.email).join(", ");
+}
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -16,6 +26,35 @@ function sleep(ms: number) {
 
 function toError(error: unknown) {
   return error instanceof Error ? error : new Error(String(error));
+}
+
+function formatListContext(
+  title: string,
+  list: z.infer<typeof assistantRequestSchema>["context"]["currentList"]
+) {
+  if (!list || list.emails.length === 0) return "";
+
+  const emailLines = list.emails
+    .slice(0, 10)
+    .map((email) =>
+      [
+        `${email.position}.`,
+        `id=${email.id}`,
+        `from=${email.fromName} <${email.fromEmail}>`,
+        formatRecipients(email.to) ? `to=${formatRecipients(email.to)}` : "",
+        `subject=${email.subject}`,
+        `date=${email.date}`,
+        `unread=${email.unread}`,
+      ]
+        .filter(Boolean)
+        .join(" ")
+    );
+
+  return [
+    `${title}:`,
+    `Source=${list.source} URL=${list.pathname} View=${list.view} Filters=${JSON.stringify(list.filters)} ResultEstimate=${list.resultSizeEstimate ?? "unknown"} NextPage=${list.nextPageAvailable ?? false}`,
+    ...emailLines,
+  ].join("\n");
 }
 
 function buildSystemPrompt(context: z.infer<typeof assistantRequestSchema>["context"]) {
@@ -33,31 +72,44 @@ function buildSystemPrompt(context: z.infer<typeof assistantRequestSchema>["cont
     : "";
 
   const prompt = [
-    "Role: MailPilot email assistant. Convert user input to one command.",
+    "Role: MailPilot email assistant. Convert user input to a short executable email plan.",
     "",
     "Scope: Help ONLY with email tasks in this application. For non-email requests (relationships, personal problems, general coding, homework, entertainment), respond: 'I can only help you with email-related tasks in this MailPilot application.'",
     "",
     "Identity: If asked for your name, respond: 'MailPilot'.",
     "",
-    "Commands:",
-    "filter: Search emails (unread, dates, sender)",
-    "openEmail: Open specific email",
-    "compose: Write/draft/send new email",
-    "reply: Respond to open email",
-    "delete: Delete open email",
-    "answer: Explain/summarize open email (no UI actions)",
-    "navigate: Change view",
-    "clearFilters: Reset filters",
+    "Commands (ONLY use these exact values for the 'type' field):",
+    "- filter: Search emails (unread, dates, sender)",
+    "- openEmail: Open specific email",
+    "- compose: Write/draft/send new email",
+    "- reply: Respond to open email",
+    "- forwardEmails: Forward one or more found emails as a new draft",
+    "- delete: Delete open email",
+    "- answer: Explain/summarize open email (no UI actions)",
+    "- navigate: Change view",
+    "- clearFilters: Reset filters",
+    "",
+    "CRITICAL: NEVER invent or use any action types other than the 9 listed above. The 'type' field must be exactly one of: filter, openEmail, compose, reply, forwardEmails, delete, answer, navigate, or clearFilters.",
     "",
     "Rules:",
-    "- Use real Gmail IDs only from context",
-    "- Set shouldSend=true for send requests (requires approval)",
-    "- Dates: ISO format (YYYY-MM-DD)",
-    "- Multiple recipients: comma-separated (email1@example.com, email2@example.com)",
-    "- Parse 'to/cc/bcc' from natural language",
+    "- Return a complete ordered plan that executes ALL steps requested by the user in sequence.",
+    "- When the user gives multiple instructions (e.g., 'filter emails, then open the latest, then reply'), ALWAYS generate ALL steps in the plan, even if later steps depend on earlier ones.",
+    "- For multi-step requests: first step filters/opens, subsequent steps operate on results from previous steps.",
+    "- Every step must include every command field required by the schema. Use null for fields that are not relevant to the command type.",
+    "- Infer recipients, message content, filters, views, counts, and dates from the user's wording.",
+    "- Use usePreviousResults=true when a step should operate on emails found by a previous step.",
+    "- For ordinal requests like 'open the third one', set resultIndex to the 1-based position from Current visible email list. If the user refers to your previous previewed results, use Last assistant result list.",
+    "- Use shouldSend=true ONLY when the user explicitly uses words like 'send', 'send it', 'send the email', 'send the reply', etc. If the user says 'compose a reply' or 'draft a reply', do NOT set shouldSend=true.",
+    "- Use real Gmail IDs only from provided context.",
+    "- Dates must be ISO format (YYYY-MM-DD).",
+    "- If required information is missing, return an answer step with a message asking for that missing information in the 'response' field.",
+    "- If replying or forwarding from an open email, use the open email context.",
+    "- The response field must always be a string explaining what action will be taken or what information is needed.",
     "",
-    `Context: Date=${context.currentDate} TZ=${context.timezone || "unknown"} Path=${context.pathname} View=${context.currentView || "unknown"} OpenEmail=${context.openEmailId || "none"} Filters=${JSON.stringify(context.filters || {})}`,
+    `Context: Date=${context.currentDate} TZ=${context.timezone || "unknown"} URL=${context.currentUrl || context.pathname} Path=${context.pathname} View=${context.currentView || "unknown"} OpenEmail=${context.openEmailId || "none"} Filters=${JSON.stringify(context.filters || {})}`,
     openEmailContext,
+    formatListContext("Current visible email list", context.currentList),
+    formatListContext("Last assistant result list", context.lastAssistantResults),
   ]
     .filter(Boolean)
     .join("\n");
@@ -69,36 +121,30 @@ async function generateCommandWithRetry(
   messages: ModelMessage[],
   systemPrompt: string,
   userId: string,
-  apiKey: string
-): Promise<z.infer<typeof assistantCommandSchema>> {
+  userOpenAIKey: string
+): Promise<z.infer<typeof assistantPlanSchema>> {
   let lastError: Error | null = null;
-  const openai = createOpenAI({ apiKey });
+  const openai = createOpenAI({ apiKey: userOpenAIKey });
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
       const result = await generateText({
         model: openai(ASSISTANT_MODEL),
         output: Output.object({
-          schema: assistantCommandSchema,
+          schema: assistantStructuredPlanSchema,
         }),
-        providerOptions: {
-          openai: {
-            strictJsonSchema: true,
-          },
-        },
         system: systemPrompt,
         messages,
       });
 
-      return result.output;
+      const normalizedOutput = normalizeStructuredAssistantPlan(result.output);
+
+      return normalizedOutput;
     } catch (error) {
       const structuredError = toError(error);
       lastError = structuredError;
-      logger.error(`Structured generation failed (attempt ${attempt}/${MAX_RETRIES})`, {
-        userId,
-        error: structuredError.message,
-        errorName: structuredError.name,
-      });
+
+      logger.error(`Structured output generation failed (attempt ${attempt}/${MAX_RETRIES})`);
 
       if (attempt < MAX_RETRIES) {
         await sleep(RETRY_DELAY_MS * attempt);
@@ -106,47 +152,8 @@ async function generateCommandWithRetry(
     }
   }
 
-  try {
-    const textResult = await generateText({
-      model: openai(ASSISTANT_MODEL),
-      system: `${systemPrompt}\n\nIMPORTANT: Your response must be valid JSON only, no markdown, no additional text.`,
-      messages,
-    });
-
-    let jsonStr = textResult.text.trim();
-
-    if (jsonStr.startsWith("```")) {
-      const lines = jsonStr.split("\n");
-      const jsonStart = lines.findIndex(
-        (line) => line.trim() === "```json" || line.trim() === "```"
-      );
-      const jsonEnd = lines.findIndex((line, idx) => idx > jsonStart && line.trim() === "```");
-      if (jsonStart >= 0 && jsonEnd > jsonStart) {
-        jsonStr = lines
-          .slice(jsonStart + 1, jsonEnd)
-          .join("\n")
-          .trim();
-      } else if (jsonStart >= 0) {
-        jsonStr = lines
-          .slice(jsonStart + 1)
-          .join("\n")
-          .trim();
-      }
-    }
-
-    const parsed = JSON.parse(jsonStr);
-    const validated = assistantCommandSchema.parse(parsed);
-
-    return validated;
-  } catch (fallbackError) {
-    const parsedFallbackError = toError(fallbackError);
-    logger.error("Fallback text generation also failed", {
-      userId,
-      error: parsedFallbackError.message,
-      errorName: parsedFallbackError.name,
-    });
-    throw lastError || parsedFallbackError;
-  }
+  logger.error("All structured output attempts failed");
+  throw lastError || new Error("Structured output generation failed");
 }
 
 export { buildSystemPrompt, generateCommandWithRetry };

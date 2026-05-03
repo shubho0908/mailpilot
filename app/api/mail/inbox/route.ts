@@ -9,7 +9,7 @@ const logger = createLogger("api:mail:inbox");
 
 export async function GET(request: NextRequest) {
   try {
-    const { auth, userId } = await requireGmailAuth(request.headers);
+    const { auth } = await requireGmailAuth(request.headers);
 
     const searchParams = Object.fromEntries(request.nextUrl.searchParams);
     const validationResult = listEmailsQuerySchema.safeParse(searchParams);
@@ -40,8 +40,6 @@ export async function GET(request: NextRequest) {
     });
 
     logger.info("Successfully fetched emails", {
-      userId,
-      label,
       count: result.emails.length,
       hasNextPage: !!result.nextPageToken,
     });

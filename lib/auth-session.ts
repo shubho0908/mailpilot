@@ -44,7 +44,7 @@ export async function getGmailAuthForUserId(userId: string): Promise<GmailAuth> 
   const googleAccount = accounts.find((acc) => acc.providerId === GOOGLE_PROVIDER_ID);
 
   if (!googleAccount || !googleAccount.accessToken) {
-    logger.warn("No Google access token found for user", { userId });
+    logger.warn("No Google access token found for user");
     throw new AuthError("No Google access token found", AuthErrorCode.NoAccessToken);
   }
 
@@ -55,9 +55,7 @@ export async function getGmailAuthForUserId(userId: string): Promise<GmailAuth> 
   const isExpired = tokenExpiry && tokenExpiry < now;
 
   if (isExpired && !googleAccount.refreshToken) {
-    logger.warn("Google access token expired without refresh token", {
-      userId,
-    });
+    logger.warn("Google access token expired without refresh token");
     throw new AuthError("Access token expired, please re-authenticate", AuthErrorCode.TokenExpired);
   }
 
@@ -80,14 +78,10 @@ export async function getGmailAuthForUserId(userId: string): Promise<GmailAuth> 
             })
             .where(eq(account.id, googleAccount.id));
 
-          logger.info("Access token refreshed and persisted to database", {
-            userId,
-          });
+          logger.info("Access token refreshed and persisted to database");
         }
       } catch (error) {
-        logger.error("Failed to persist refreshed token to database", error, {
-          userId,
-        });
+        logger.error("Failed to persist refreshed token to database", error);
       }
     },
   };

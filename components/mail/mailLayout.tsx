@@ -14,16 +14,17 @@ function MailLayoutContent({ children }: MailLayoutProps) {
   return (
     <>
       <MailNavbar />
-      <div className="min-h-[100dvh] bg-zinc-50 dark:bg-zinc-950 relative overflow-hidden">
+      <div className="app-shell app-grid-bg min-h-[100dvh] bg-[var(--app-bg)] relative overflow-hidden transition-colors duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]">
+        <div className="app-grain" aria-hidden="true" />
         <main
           className={cn(
-            "pt-16 sm:pt-20 px-3 sm:px-4 transition-transform duration-300 ease-out",
+            "relative pt-20 sm:pt-24 px-4 sm:px-6 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
             isOpen && "md:translate-x-[-200px]"
           )}
         >
           <div
             className={cn(
-              "max-w-7xl mx-auto w-full transition-all duration-300 ease-out",
+              "max-w-7xl mx-auto w-full transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
               isOpen && "md:max-w-[calc(100%-200px)]"
             )}
           >

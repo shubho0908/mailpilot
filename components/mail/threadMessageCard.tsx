@@ -39,7 +39,7 @@ export function ThreadMessageCard({ email, isCurrent }: ThreadMessageCardProps) 
       )}
     >
       <div className="mb-4 flex items-start gap-3 sm:gap-4">
-        <div className="h-10 w-10 flex-shrink-0 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 p-0.5 sm:h-10 sm:w-10">
+        <div className="h-10 w-10 flex-shrink-0 rounded-lg bg-[var(--app-accent)] p-0.5 sm:h-10 sm:w-10">
           <div className="flex h-full w-full items-center justify-center rounded-md bg-white dark:bg-zinc-800">
             <span className="text-base font-semibold tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-base">
               {(email.from.name || email.from.email).charAt(0).toUpperCase()}

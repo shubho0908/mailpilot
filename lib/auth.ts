@@ -29,7 +29,7 @@ export const auth = betterAuth({
       clientSecret: requireEnv("GOOGLE_CLIENT_SECRET"),
       enabled: true,
       accessType: "offline",
-      prompt: "select_account consent",
+      prompt: "select_account",
       scope: GOOGLE_GMAIL_SCOPES,
     },
   },

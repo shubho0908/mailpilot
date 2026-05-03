@@ -26,11 +26,11 @@ export async function DELETE(request: NextRequest) {
     }
 
     const { id } = validationResult.data;
-    const { auth, userId } = await requireGmailAuth(request.headers);
+    const { auth } = await requireGmailAuth(request.headers);
 
     await deleteEmail(auth, id);
 
-    logger.info("Successfully deleted email", { userId, emailId: id });
+    logger.info("Successfully deleted email");
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {

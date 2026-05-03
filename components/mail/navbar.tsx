@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { AssistantToggle } from "./assistant/assistantToggle";
 import { SyncStatusIndicator } from "./syncStatus";
 import { UserProfileDropdown } from "@/components/user/userProfileDropdown";
@@ -19,7 +20,7 @@ export function MailNavbar() {
   return (
     <>
       <div
-        className={`fixed inset-0 bg-black/20 backdrop-blur-sm z-30 sm:hidden transition-opacity duration-300 ease-out ${
+        className={`fixed inset-0 bg-[var(--app-text)]/10 backdrop-blur-sm z-30 sm:hidden transition-opacity duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
           isMobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
         onClick={() => setIsMobileMenuOpen(false)}
@@ -27,25 +28,25 @@ export function MailNavbar() {
       />
 
       <nav className="fixed top-0 left-1/2 z-40 w-full max-w-[calc(100vw-1rem)] -translate-x-1/2 px-2 sm:w-auto sm:max-w-none sm:px-6">
-        <header className="flex flex-col bg-white/60 dark:bg-zinc-900/60 backdrop-blur-2xl rounded-2xl mt-3 sm:mt-4 border border-white/40 dark:border-zinc-700/40 shadow-[0_8px_32px_-4px_rgba(0,0,0,0.08),0_4px_16px_-4px_rgba(0,0,0,0.04),0_2px_8px_-2px_rgba(0,0,0,0.02)] dark:shadow-[0_8px_32px_-4px_rgba(0,0,0,0.5),0_4px_16px_-4px_rgba(0,0,0,0.3),0_2px_8px_-2px_rgba(0,0,0,0.2)] ring-1 ring-white/50 dark:ring-zinc-600/50 transition-all duration-300 ease-out">
-          <div className="flex items-center justify-between gap-1 px-2 py-2.5 sm:gap-2 sm:px-3">
-            <div className="flex items-center gap-2.5 pr-3 border-zinc-200/60 dark:border-zinc-800/60 flex-shrink-0 md:border-r md:pr-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-[0_2px_8px_-1px_rgba(16,185,129,0.15)]">
+        <header className="app-shell flex flex-col bg-[var(--app-bg-translucent)] backdrop-blur-2xl rounded-2xl mt-3 sm:mt-4 border border-[var(--app-border)] shadow-[0_8px_32px_-4px_var(--app-shadow),0_4px_16px_-4px_var(--app-shadow),0_2px_8px_-2px_var(--app-shadow)] ring-1 ring-[var(--app-border)]/50 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]">
+          <div className="flex items-center justify-between gap-1 px-3 py-2.5 sm:gap-2 sm:px-4">
+            <div className="flex items-center gap-2.5 pr-3 border-[var(--app-border)]/60 flex-shrink-0 md:border-r md:pr-4">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[var(--app-accent)] shadow-[0_2px_8px_-1px_var(--app-shadow)] transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5">
                 <svg
-                  className="h-4 w-4 text-white"
+                  className="h-4 w-4 text-[var(--app-bg)]"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  strokeWidth={1.7}
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
                     d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                   />
                 </svg>
               </div>
-              <span className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+              <span className="text-sm font-semibold tracking-tight text-[var(--app-text)]">
                 MailPilot
               </span>
             </div>
@@ -54,10 +55,10 @@ export function MailNavbar() {
               <li>
                 <Link
                   href={inboxPath}
-                  className={`px-2.5 py-2 rounded-xl text-sm font-medium tracking-tight transition-all duration-200 cursor-pointer whitespace-nowrap sm:px-3 ${
+                  className={`px-3 py-2 rounded-xl text-sm font-medium tracking-tight transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] cursor-pointer whitespace-nowrap sm:px-4 ${
                     pathname === inboxPath || pathname.startsWith(`${inboxPath}/`)
-                      ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)]"
-                      : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
+                      ? "bg-[var(--app-soft)] text-[var(--app-text)] shadow-[inset_0_1px_2px_var(--app-shadow)]"
+                      : "text-[var(--app-text-muted)] hover:bg-[var(--app-soft)] hover:text-[var(--app-text)]"
                   }`}
                 >
                   Inbox
@@ -66,10 +67,10 @@ export function MailNavbar() {
               <li>
                 <Link
                   href={sentPath}
-                  className={`px-2.5 py-2 rounded-xl text-sm font-medium tracking-tight transition-all duration-200 cursor-pointer whitespace-nowrap sm:px-3 ${
+                  className={`px-3 py-2 rounded-xl text-sm font-medium tracking-tight transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] cursor-pointer whitespace-nowrap sm:px-4 ${
                     pathname === sentPath
-                      ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)]"
-                      : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
+                      ? "bg-[var(--app-soft)] text-[var(--app-text)] shadow-[inset_0_1px_2px_var(--app-shadow)]"
+                      : "text-[var(--app-text-muted)] hover:bg-[var(--app-soft)] hover:text-[var(--app-text)]"
                   }`}
                 >
                   Sent
@@ -85,28 +86,35 @@ export function MailNavbar() {
 
                 <Link
                   href={composePath}
-                  className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl bg-emerald-500 dark:bg-emerald-600 !text-white text-sm font-medium tracking-tight transition-all duration-200 hover:bg-emerald-600 dark:hover:bg-emerald-700 shadow-[0_1px_3px_-1px_rgba(16,185,129,0.2)] cursor-pointer sm:px-3 [&_svg]:text-white"
+                  className="app-btn-primary flex items-center gap-2 px-4 py-2 text-sm cursor-pointer sm:px-5"
                 >
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 4v16m8-8H4"
-                    />
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.7}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                   </svg>
                   <span className="hidden sm:inline">New</span>
                 </Link>
               </div>
 
-              <button
+              <Button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="sm:hidden flex items-center justify-center w-8 h-8 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all duration-200 cursor-pointer shadow-[0_1px_3px_-1px_rgba(0,0,0,0.04)] dark:shadow-[0_1px_3px_-1px_rgba(0,0,0,0.2)]"
+                variant="ghost"
+                size="icon"
+                className="sm:hidden flex items-center justify-center w-8 h-8 rounded-xl bg-[var(--app-soft)] text-[var(--app-text-muted)] hover:bg-[var(--app-border-strong)] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] shadow-[0_1px_3px_-1px_var(--app-shadow)] active:scale-[0.98]"
                 aria-label="Toggle menu"
                 aria-expanded={isMobileMenuOpen}
               >
-                {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </button>
+                {isMobileMenuOpen ? (
+                  <X className="h-5 w-5" strokeWidth={1.7} />
+                ) : (
+                  <Menu className="h-5 w-5" strokeWidth={1.7} />
+                )}
+              </Button>
 
               <div className="sm:hidden">
                 <UserProfileDropdown />
@@ -115,21 +123,21 @@ export function MailNavbar() {
           </div>
 
           <section
-            className={`sm:hidden overflow-hidden transition-all duration-300 ease-out ${
+            className={`sm:hidden overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
               isMobileMenuOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
             }`}
             aria-label="Mobile navigation menu"
           >
-            <nav className="px-2 pb-4" aria-label="Mobile navigation">
+            <nav className="px-3 pb-4" aria-label="Mobile navigation">
               <ul className="space-y-2 m-0 p-0 list-none">
                 <li>
                   <Link
                     href={inboxPath}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`block px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                    className={`block px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
                       pathname === inboxPath || pathname.startsWith(`${inboxPath}/`)
-                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
-                        : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                        ? "bg-[var(--app-accent-soft)] text-[var(--app-accent)]"
+                        : "text-[var(--app-text-muted)] hover:bg-[var(--app-soft)]"
                     }`}
                   >
                     Inbox
@@ -139,10 +147,10 @@ export function MailNavbar() {
                   <Link
                     href={sentPath}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`block px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                    className={`block px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
                       pathname === sentPath || pathname.startsWith(`${sentPath}/`)
-                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
-                        : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                        ? "bg-[var(--app-accent-soft)] text-[var(--app-accent)]"
+                        : "text-[var(--app-text-muted)] hover:bg-[var(--app-soft)]"
                     }`}
                   >
                     Sent
@@ -152,22 +160,22 @@ export function MailNavbar() {
                   <Link
                     href={composePath}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`block px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                    className={`block px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
                       pathname === composePath
-                        ? "bg-emerald-500 dark:bg-emerald-600 text-white hover:bg-emerald-600 dark:hover:bg-emerald-700"
-                        : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                        ? "app-btn-primary"
+                        : "text-[var(--app-text-muted)] hover:bg-[var(--app-soft)]"
                     }`}
                   >
                     Compose
                   </Link>
                 </li>
               </ul>
-              <div className="border-t border-zinc-200 dark:border-zinc-800 pt-2 mt-2 space-y-2">
+              <div className="border-t border-[var(--app-border)] pt-2 mt-2 space-y-2">
                 <div className="flex items-center gap-3 px-4">
                   <SyncStatusIndicator />
                 </div>
                 <div className="flex items-center gap-3 px-4">
-                  <AssistantToggle />
+                  <AssistantToggle onPanelOpen={() => setIsMobileMenuOpen(false)} />
                 </div>
               </div>
             </nav>

@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
         try {
           sendSseComment(controller, "keep-alive");
         } catch (error) {
-          logger.warn("Failed to send keep-alive", { userId, error });
+          logger.warn("Failed to send keep-alive", { error });
           clearInterval(keepAlive);
           removeClient();
         }
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
         try {
           controller.close();
         } catch (error) {
-          logger.warn("Failed to close controller", { userId, error });
+          logger.warn("Failed to close controller", { error });
         }
       });
     },

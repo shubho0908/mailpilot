@@ -23,15 +23,14 @@ export function AssistantPanelFooter({
   onClearConversation,
 }: AssistantPanelFooterProps) {
   return (
-    <div className="border-t border-zinc-200/50 dark:border-zinc-800/50 p-3 space-y-2">
+    <div className="app-shell shrink-0 space-y-2 border-t border-[var(--app-border)] bg-[var(--app-panel)]/95 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-xl">
       {messages.length > 0 && (
         <Button
           onClick={onClearConversation}
           variant="ghost"
-          size="sm"
-          className="w-full text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
+          className="app-btn-secondary w-full text-xs text-[var(--app-text-muted)] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] active:scale-[0.98]"
         >
-          <Trash2 className="w-3 h-3 mr-1" />
+          <Trash2 className="w-3 h-3 mr-1" strokeWidth={1.7} />
           Clear conversation
         </Button>
       )}
@@ -41,16 +40,16 @@ export function AssistantPanelFooter({
           onChange={(e) => onInputChange(e.target.value)}
           onKeyDown={onKeyDown}
           placeholder="Tell me what to do..."
-          className="flex-1 h-9 text-sm"
+          className="app-input flex-1 h-10 text-sm"
           disabled={isThinking}
         />
         <Button
           onClick={onSendMessage}
           disabled={!input.trim() || isThinking}
           size="icon"
-          className="h-9 w-9 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700"
+          className="app-btn-primary h-10 w-10 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] active:scale-[0.98]"
         >
-          <Send className="w-4 h-4" />
+          <Send className="w-4 h-4" strokeWidth={1.7} />
         </Button>
       </div>
     </div>

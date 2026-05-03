@@ -3,6 +3,9 @@ import { getCurrentSession, handleAuthError } from "@/lib/auth-session";
 import { db } from "@/db";
 import { user } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("api:user:me");
 
 export async function GET() {
   try {
@@ -40,7 +43,7 @@ export async function GET() {
       return authError;
     }
 
-    console.error("Error fetching user:", error);
+    logger.error("Failed to fetch current user", error);
     return NextResponse.json({ error: "Failed to fetch user" }, { status: 500 });
   }
 }

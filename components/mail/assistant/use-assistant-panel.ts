@@ -5,17 +5,23 @@ import { usePathname, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAssistantStore } from "@/lib/store/assistant-store";
 import { useMailStore } from "@/lib/store/mail-store";
-import { mailFilterHref } from "@/lib/mail/filter-url";
+import { mailFilterHref, mailFiltersEqual } from "@/lib/mail/filter-url";
 import { queryKeys } from "@/lib/query-keys";
 import { useSendEmail } from "@/hooks/mutations/use-send-email";
 import { useDeleteEmail } from "@/hooks/mutations/use-delete-email";
 import type {
   AssistantChatMessage,
+  AssistantEmailListContext,
   AssistantEmailPreview,
   AssistantUiAction,
 } from "@/lib/assistant/actions";
 import { assistantResponseSchema } from "@/lib/assistant/actions";
-import { mailRouteSchema, pathForMailRoute } from "@/lib/mail/types";
+import {
+  mailRouteSchema,
+  mailViewSchema,
+  pathForMailRoute,
+  type MailFilters,
+} from "@/lib/mail/types";
 import type { Email } from "@/services/gmail/gmail.types";
 import {
   getCurrentView,
@@ -27,13 +33,23 @@ import { toAssistantOpenEmail } from "@/lib/assistant/email-transformers";
 import type { Message } from "./assistantPanelMessagesList";
 import { assistantPanelReducer } from "./assistant-panel-reducer";
 
+function completeFilters(filters: AssistantEmailListContext["filters"]): MailFilters {
+  return {
+    search: filters.search ?? "",
+    sender: filters.sender ?? null,
+    dateFrom: filters.dateFrom ?? null,
+    dateTo: filters.dateTo ?? null,
+    unread: filters.unread ?? null,
+    maxResults: filters.maxResults ?? null,
+  };
+}
+
 export function useAssistantPanel() {
   const router = useRouter();
   const { push } = router;
   const pathname = usePathname();
   const queryClient = useQueryClient();
   const { closePanel } = useAssistantStore();
-  const filters = useMailStore((state) => state.filters);
   const setOpenEmailId = useMailStore((state) => state.setOpenEmailId);
   const setComposeState = useMailStore((state) => state.setComposeState);
   const { mutate: sendEmail } = useSendEmail();
@@ -50,6 +66,8 @@ export function useAssistantPanel() {
   const { messages, input, isThinking, error, pendingApproval } = state;
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isSending, setIsSending] = useState(false);
+  const [lastAssistantResults, setLastAssistantResults] =
+    useState<AssistantEmailListContext | null>(null);
 
   const compactHistory = useMemo(
     () =>
@@ -183,6 +201,17 @@ export function useAssistantPanel() {
 
     try {
       const openEmailId = getOpenEmailId(pathname);
+      const { emailListContext, filters } = useMailStore.getState();
+      const currentUrl =
+        typeof window === "undefined"
+          ? pathname
+          : `${window.location.pathname}${window.location.search}`;
+      const currentList =
+        emailListContext &&
+        emailListContext.pathname === currentUrl &&
+        mailFiltersEqual(completeFilters(emailListContext.filters), filters)
+          ? emailListContext
+          : null;
       let openEmail = undefined;
 
       if (openEmailId) {
@@ -214,6 +243,10 @@ export function useAssistantPanel() {
             openEmailId,
             openEmail,
             filters,
+            currentList,
+            lastAssistantResults,
+            currentUrl,
+            latestUserMessage: content,
             currentDate: new Date().toISOString().split("T")[0],
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           },
@@ -225,9 +258,45 @@ export function useAssistantPanel() {
         throw new Error(data?.error || "Assistant request failed");
       }
 
-      const data = assistantResponseSchema.parse(await response.json());
-      addAssistantMessage(data.message, data.previews);
-      executeActions(data.actions || []);
+      const data = await response.json();
+
+      if (data.error || data.errorType) {
+        throw new Error(data.message || "Assistant request failed");
+      }
+
+      const parsedData = assistantResponseSchema.parse(data);
+      if (parsedData.previews?.length) {
+        const setFiltersAction = parsedData.actions?.find(
+          (action): action is Extract<AssistantUiAction, { type: "setFilters" }> =>
+            action.type === "setFilters"
+        );
+        const fallbackView = getCurrentView(pathname) ?? mailViewSchema.enum.inbox;
+        const resultView = setFiltersAction?.view ?? fallbackView;
+        const resultFilters = setFiltersAction
+          ? {
+              search: setFiltersAction.filters.search ?? "",
+              sender: setFiltersAction.filters.sender ?? null,
+              dateFrom: setFiltersAction.filters.dateFrom ?? null,
+              dateTo: setFiltersAction.filters.dateTo ?? null,
+              unread: setFiltersAction.filters.unread ?? null,
+              maxResults: setFiltersAction.filters.maxResults ?? null,
+            }
+          : filters;
+
+        setLastAssistantResults({
+          source: "assistant-results",
+          pathname: setFiltersAction ? mailFilterHref(resultView, resultFilters) : currentUrl,
+          view: resultView,
+          filters: resultFilters,
+          emails: parsedData.previews.slice(0, 25).map((preview, index) => ({
+            ...preview,
+            position: index + 1,
+          })),
+          capturedAt: new Date().toISOString(),
+        });
+      }
+      addAssistantMessage(parsedData.message, parsedData.previews);
+      executeActions(parsedData.actions || []);
     } catch (requestError) {
       const message =
         requestError instanceof Error ? requestError.message : "Assistant request failed";
@@ -239,9 +308,9 @@ export function useAssistantPanel() {
     addAssistantMessage,
     compactHistory,
     executeActions,
-    filters,
     input,
     isThinking,
+    lastAssistantResults,
     pathname,
     queryClient,
   ]);

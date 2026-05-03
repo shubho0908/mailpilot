@@ -14,7 +14,6 @@ jobs:
       BETTER_AUTH_URL: "http://localhost:3000"
       GOOGLE_CLIENT_ID: "ci-google-client-id"
       GOOGLE_CLIENT_SECRET: "ci-google-client-secret"
-      OPENAI_API_KEY: "ci-openai-api-key"
       OPENAI_MODEL: "gpt-5"
 
     steps:

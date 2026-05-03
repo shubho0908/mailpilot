@@ -126,8 +126,7 @@ export const featurePanels = [
   {
     icon: Search,
     title: "Navigate by asking",
-    description:
-      "Ask for a thread, sender, or filter. The agent builds the view you need.",
+    description: "Ask for a thread, sender, or filter. The agent builds the view you need.",
     detail: "Gmail search becomes a UI action.",
     className: "md:col-span-5",
   },
@@ -142,8 +141,7 @@ export const featurePanels = [
   {
     icon: Fingerprint,
     title: "Bounded by approval",
-    description:
-      "Send and delete wait for your review. Every action stays visible.",
+    description: "Send and delete wait for your review. Every action stays visible.",
     detail: "No silent actions, no mystery state.",
     className: "md:col-span-7",
   },
@@ -153,23 +151,19 @@ export const workflowSteps = [
   {
     icon: ArrowDownToLine,
     title: "Connect Gmail",
-    description:
-      "Sign in once. The workspace gets inbox, sent, and thread access.",
+    description: "Sign in once. The workspace gets inbox, sent, and thread access.",
   },
   {
     icon: Sparkle,
     title: "Tell the agent what you need",
-    description:
-      "Ask for a reply, search, or action in plain language.",
+    description: "Ask for a reply, search, or action in plain language.",
   },
   {
     icon: Check,
     title: "Review and approve",
-    description:
-      "Inspect the UI, edit drafts if needed, and approve before anything sends.",
+    description: "Inspect the UI, edit drafts if needed, and approve before anything sends.",
   },
 ];
-
 
 export const footerLinks = [
   { label: "Product", href: "#product" },

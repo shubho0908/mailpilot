@@ -1,4 +1,4 @@
-enum ErrorCode {
+export enum ErrorCode {
   AUTHENTICATION_FAILED = "AUTHENTICATION_FAILED",
   AUTHORIZATION_FAILED = "AUTHORIZATION_FAILED",
   NETWORK_ERROR = "NETWORK_ERROR",
@@ -7,6 +7,10 @@ enum ErrorCode {
   GMAIL_API_ERROR = "GMAIL_API_ERROR",
   TOKEN_EXPIRED = "TOKEN_EXPIRED",
   QUOTA_EXCEEDED = "QUOTA_EXCEEDED",
+  OPENAI_API_KEY_INVALID = "OPENAI_API_KEY_INVALID",
+  OPENAI_RATE_LIMIT_EXCEEDED = "OPENAI_RATE_LIMIT_EXCEEDED",
+  OPENAI_QUOTA_EXCEEDED = "OPENAI_QUOTA_EXCEEDED",
+  OPENAI_MODEL_NOT_FOUND = "OPENAI_MODEL_NOT_FOUND",
 }
 
 export class AppError extends Error {
@@ -82,6 +86,30 @@ export class QuotaExceededError extends AppError {
   }
 }
 
+export class OpenAIApiKeyInvalidError extends AppError {
+  constructor(message: string = "Invalid OpenAI API key", context?: Record<string, unknown>) {
+    super(message, ErrorCode.OPENAI_API_KEY_INVALID, 400, true, context);
+  }
+}
+
+export class OpenAIRateLimitExceededError extends AppError {
+  constructor(message: string = "OpenAI rate limit exceeded", context?: Record<string, unknown>) {
+    super(message, ErrorCode.OPENAI_RATE_LIMIT_EXCEEDED, 429, true, context);
+  }
+}
+
+export class OpenAIQuotaExceededError extends AppError {
+  constructor(message: string = "OpenAI quota exceeded", context?: Record<string, unknown>) {
+    super(message, ErrorCode.OPENAI_QUOTA_EXCEEDED, 402, true, context);
+  }
+}
+
+export class OpenAIModelNotFoundError extends AppError {
+  constructor(message: string = "OpenAI model not found", context?: Record<string, unknown>) {
+    super(message, ErrorCode.OPENAI_MODEL_NOT_FOUND, 404, true, context);
+  }
+}
+
 export enum AuthErrorCode {
   Unauthorized = "UNAUTHORIZED",
   NoAccessToken = "NO_ACCESS_TOKEN",
@@ -105,4 +133,63 @@ export function isAppError(error: unknown): error is AppError {
 
 export function isAuthError(error: unknown): error is AuthError {
   return error instanceof AuthError;
+}
+
+function errorProperty(error: Error, property: string): unknown {
+  return (error as Error & Record<string, unknown>)[property];
+}
+
+function openAIErrorCode(error: Error) {
+  const directCode = errorProperty(error, "code");
+  const cause = errorProperty(error, "cause");
+  const causeCode =
+    cause && typeof cause === "object" && "code" in cause
+      ? (cause as Record<string, unknown>).code
+      : undefined;
+
+  return typeof directCode === "string"
+    ? directCode
+    : typeof causeCode === "string"
+      ? causeCode
+      : undefined;
+}
+
+function openAIErrorStatus(error: Error) {
+  const directStatus = errorProperty(error, "statusCode") ?? errorProperty(error, "status");
+  const cause = errorProperty(error, "cause");
+  const causeStatus =
+    cause && typeof cause === "object"
+      ? ((cause as Record<string, unknown>).statusCode ?? (cause as Record<string, unknown>).status)
+      : undefined;
+  const status = directStatus ?? causeStatus;
+
+  return typeof status === "number" ? status : undefined;
+}
+
+export function mapOpenAIError(error: unknown): AppError | null {
+  if (!(error instanceof Error)) {
+    return null;
+  }
+
+  const errorMessage = error.message.toLowerCase();
+  const errorCode = openAIErrorCode(error);
+  const errorStatus = openAIErrorStatus(error);
+
+  if (errorCode === "invalid_api_key" || errorMessage.includes("incorrect api key")) {
+    return new OpenAIApiKeyInvalidError(error.message);
+  }
+
+  if (errorStatus === 429 || errorMessage.includes("rate limit")) {
+    return new OpenAIRateLimitExceededError(error.message);
+  }
+
+  if (errorCode === "insufficient_quota" || errorMessage.includes("insufficient_quota")) {
+    return new OpenAIQuotaExceededError(error.message);
+  }
+
+  if (errorStatus === 404 && errorMessage.includes("model")) {
+    return new OpenAIModelNotFoundError(error.message);
+  }
+
+  return null;
 }

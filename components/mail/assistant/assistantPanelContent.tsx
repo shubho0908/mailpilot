@@ -40,7 +40,10 @@ export function AssistantPanelContent({
   return (
     <>
       <AssistantPanelHeader onClose={closePanel} isThinking={isThinking} />
-      <div className="min-h-0 flex-1 overflow-y-auto p-3" ref={scrollRef}>
+      <div
+        className="min-h-0 flex-1 overflow-y-auto bg-[var(--app-bg)]/45 p-3 sm:p-4"
+        ref={scrollRef}
+      >
         <AssistantPanelMessagesList
           messages={messages}
           error={error}
@@ -86,19 +89,18 @@ export function AssistantPanelMobile({
         tabIndex={isOpen ? 0 : -1}
         onClick={closePanel}
         className={cn(
-          "fixed inset-0 z-40 bg-zinc-950/35 backdrop-blur-[2px] transition-opacity duration-300 md:hidden",
+          "fixed inset-0 z-40 bg-[#191713]/28 backdrop-blur-[3px] transition-opacity duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] dark:bg-zinc-950/58 md:hidden",
           isOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
         )}
       />
 
       <div
         className={cn(
-          "fixed inset-x-0 bottom-0 z-50 flex h-[min(86dvh,760px)] w-full flex-col md:hidden",
-          "rounded-t-[1.25rem] border border-zinc-200/70 border-b-0",
-          "bg-white/95 shadow-[0_-12px_40px_-18px_rgba(0,0,0,0.35)] backdrop-blur-xl",
-          "ring-1 ring-black/[0.02] transition-transform duration-300 ease-out",
-          "dark:border-zinc-800/70 dark:bg-zinc-900/95 dark:ring-white/[0.05]",
-          isOpen ? "translate-y-0" : "translate-y-full",
+          "app-shell fixed inset-x-2 bottom-2 z-50 flex h-[min(88dvh,720px)] max-h-[calc(100dvh-1rem)] flex-col overflow-hidden rounded-[1.35rem] md:hidden",
+          "border border-[var(--app-border)] bg-[var(--app-panel)] shadow-[0_-24px_64px_-34px_var(--app-shadow-strong),0_-8px_22px_-18px_var(--app-shadow)]",
+          "ring-1 ring-[var(--app-border)]/60 backdrop-blur-2xl",
+          "transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform",
+          isOpen ? "translate-y-0" : "translate-y-[calc(100%+1rem)]",
           className
         )}
         role="dialog"
@@ -106,7 +108,7 @@ export function AssistantPanelMobile({
         aria-hidden={!isOpen}
         aria-label="AI Assistant"
       >
-        <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-zinc-300 dark:bg-zinc-700" />
+        <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-[var(--app-border-strong)]" />
         {children}
       </div>
     </>
@@ -123,11 +125,10 @@ export function AssistantPanelDesktop({ isOpen, children, className }: Assistant
   return (
     <div
       className={cn(
-        "fixed inset-y-0 left-auto right-0 z-50 hidden md:flex h-full w-[400px] max-w-[calc(100vw-2rem)] flex-col",
-        "border-l border-zinc-200/70",
-        "bg-white/95 shadow-[0_4px_16px_-2px_rgba(0,0,0,0.08)] backdrop-blur-xl",
-        "ring-1 ring-black/[0.02] transition-transform duration-300 ease-out",
-        "dark:border-zinc-800/70 dark:bg-zinc-900/95 dark:ring-white/[0.05]",
+        "app-shell fixed inset-y-0 left-auto right-0 z-50 hidden h-full w-[400px] max-w-[calc(100vw-2rem)] flex-col md:flex",
+        "border-l border-[var(--app-border)]",
+        "bg-[var(--app-panel)] shadow-[0_4px_16px_-2px_var(--app-shadow)] backdrop-blur-md",
+        "transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
         isOpen ? "translate-x-0" : "translate-x-full",
         className
       )}

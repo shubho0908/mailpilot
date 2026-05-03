@@ -18,9 +18,9 @@ const EmailListItem = memo(({ email, onClick, index }: EmailListItemProps) => {
   return (
     <div
       onClick={handleSelectEmail}
-      className="group relative cursor-pointer transition-all duration-300 hover:scale-[1.01] active:scale-[0.99]"
+      className="app-reveal group relative cursor-pointer transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 active:scale-[0.99]"
       style={{
-        animationDelay: `${index * 30}ms`,
+        animationDelay: `${index * 40}ms`,
       }}
       role="button"
       tabIndex={0}
@@ -31,13 +31,13 @@ const EmailListItem = memo(({ email, onClick, index }: EmailListItemProps) => {
         }
       }}
     >
-      <div className="relative bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl rounded-xl p-0.5 ring-1 ring-black/[0.02] dark:ring-white/[0.05] shadow-[0_2px_8px_-1px_rgba(0,0,0,0.04),0_1px_4px_-1px_rgba(0,0,0,0.03)] dark:shadow-[0_2px_8px_-1px_rgba(0,0,0,0.3),0_1px_4px_-1px_rgba(0,0,0,0.2)] hover:shadow-[0_4px_12px_-1px_rgba(0,0,0,0.06),0_2px_6px_-1px_rgba(0,0,0,0.04)] dark:hover:shadow-[0_4px_12px_-1px_rgba(0,0,0,0.4),0_2px_6px_-1px_rgba(0,0,0,0.3)] transition-shadow duration-300">
-        <div className="bg-white dark:bg-zinc-900 rounded-lg p-3 sm:p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]">
+      <div className="app-card relative p-1 transition-shadow duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:shadow-[0_4px_16px_-1px_var(--app-shadow-strong),0_2px_8px_-1px_var(--app-shadow)]">
+        <div className="bg-[var(--app-panel)] rounded-lg p-3 sm:p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
           <div className="flex items-start gap-3 sm:gap-4">
             <div className="relative flex-shrink-0">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 p-0.5">
-                <div className="w-full h-full rounded-md bg-white dark:bg-zinc-800 flex items-center justify-center">
-                  <span className="text-base sm:text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[var(--app-accent)] p-0.5 shadow-[0_2px_8px_-1px_var(--app-shadow)]">
+                <div className="w-full h-full rounded-lg bg-[var(--app-bg)] flex items-center justify-center">
+                  <span className="text-base sm:text-lg font-semibold tracking-tight text-[var(--app-accent)]">
                     {(email.to[0]?.name || email.to[0]?.email).charAt(0).toUpperCase()}
                   </span>
                 </div>
@@ -47,22 +47,22 @@ const EmailListItem = memo(({ email, onClick, index }: EmailListItemProps) => {
             <div className="flex-1 min-w-0">
               <div className="flex flex-col gap-2 mb-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-xs sm:text-sm font-medium tracking-tight text-zinc-900 dark:text-zinc-50 truncate">
+                  <h3 className="text-xs sm:text-sm font-medium tracking-tight text-[var(--app-text)] truncate">
                     {email.to[0]?.name || email.to[0]?.email}
                   </h3>
-                  <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5 tracking-tight truncate">
+                  <p className="text-xs text-[var(--app-text-faint)] mt-0.5 tracking-tight truncate">
                     {email.to[0]?.email}
                   </p>
                 </div>
-                <span className="text-xs text-zinc-400 dark:text-zinc-500 whitespace-nowrap tracking-tight sm:flex-shrink-0">
+                <span className="text-xs text-[var(--app-text-faint)] whitespace-nowrap tracking-tight sm:flex-shrink-0">
                   <DateDisplay date={email.date} format="date" />
                 </span>
               </div>
 
-              <h4 className="mb-1 break-words text-xs leading-tight text-zinc-700 dark:text-zinc-300 sm:text-sm">
+              <h4 className="mb-1 break-words text-xs leading-tight text-[var(--app-text-muted)] sm:text-sm">
                 {email.subject}
               </h4>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2 leading-relaxed">
+              <p className="text-xs text-[var(--app-text-muted)] line-clamp-2 leading-relaxed">
                 {email.snippet}
               </p>
             </div>
@@ -70,7 +70,7 @@ const EmailListItem = memo(({ email, onClick, index }: EmailListItemProps) => {
         </div>
       </div>
 
-      <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-amber-500/[0.02] to-orange-600/[0.02] opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+      <div className="absolute inset-0 rounded-xl bg-[var(--app-accent)]/[0.02] opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none" />
     </div>
   );
 });

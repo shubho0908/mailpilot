@@ -28,8 +28,7 @@ export function UserProfileDropdown() {
         method: "POST",
       });
       window.location.href = "/";
-    } catch (error) {
-      console.error("Error signing out:", error);
+    } catch {
       toast.error("Failed to sign out");
     }
   };
