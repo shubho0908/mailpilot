@@ -128,3 +128,149 @@
     @apply font-sans;
   }
 }
+
+@layer utilities {
+  .landing-shell {
+    --landing-bg: #fbfaf7;
+    --landing-bg-translucent: rgba(251, 250, 247, 0.9);
+    --landing-text: #191713;
+    --landing-copy: #625b52;
+    --landing-muted: #6f675d;
+    --landing-faint: #7c7368;
+    --landing-panel: #fffefb;
+    --landing-soft: #f5f1ea;
+    --landing-band: #f4f0e9;
+    --landing-tray: #eee8df;
+    --landing-border: #ded5c8;
+    --landing-border-strong: #cfc3b4;
+    --landing-accent: #47644d;
+    --landing-accent-soft: #edf3ec;
+    --landing-accent-border: #bdc9b8;
+    --landing-danger: #9f2f2d;
+    --landing-danger-soft: #fdebec;
+    --landing-danger-border: #ecc6c4;
+    --landing-bead: #d9d1c5;
+    --landing-inverse: #191713;
+    --landing-inverse-hover: #342f28;
+    --landing-inverse-text: #fbfaf7;
+    --landing-inverse-muted: #bdc9b8;
+    --landing-inverse-border: rgba(251, 250, 247, 0.16);
+    --landing-inverse-soft: rgba(251, 250, 247, 0.08);
+    --landing-focus: rgba(71, 100, 77, 0.2);
+    --landing-focus-inverse: rgba(251, 250, 247, 0.22);
+    --landing-shadow: rgba(68, 54, 36, 0.1);
+    --landing-hover-shadow: rgba(68, 54, 36, 0.08);
+    --landing-grid-line: rgba(71, 100, 77, 0.045);
+    --landing-grain-a: rgba(25, 23, 19, 0.08);
+    --landing-grain-b: rgba(71, 100, 77, 0.07);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .dark .landing-shell {
+    --landing-bg: #0f0f11;
+    --landing-bg-translucent: rgba(15, 15, 17, 0.9);
+    --landing-text: #f4f4f5;
+    --landing-copy: #c7c7cc;
+    --landing-muted: #a1a1aa;
+    --landing-faint: #85858f;
+    --landing-panel: #18181b;
+    --landing-soft: #242428;
+    --landing-band: #141416;
+    --landing-tray: #27272a;
+    --landing-border: rgba(244, 244, 245, 0.12);
+    --landing-border-strong: rgba(244, 244, 245, 0.22);
+    --landing-accent: #d4d4d8;
+    --landing-accent-soft: rgba(212, 212, 216, 0.11);
+    --landing-accent-border: rgba(212, 212, 216, 0.32);
+    --landing-danger: #f0a6a0;
+    --landing-danger-soft: rgba(127, 29, 29, 0.2);
+    --landing-danger-border: rgba(240, 166, 160, 0.3);
+    --landing-bead: #5f5f66;
+    --landing-inverse: #f4f4f5;
+    --landing-inverse-hover: #dddde1;
+    --landing-inverse-text: #0f0f11;
+    --landing-inverse-muted: #71717a;
+    --landing-inverse-border: rgba(15, 15, 17, 0.18);
+    --landing-inverse-soft: rgba(15, 15, 17, 0.08);
+    --landing-focus: rgba(212, 212, 216, 0.25);
+    --landing-focus-inverse: rgba(212, 212, 216, 0.3);
+    --landing-shadow: rgba(0, 0, 0, 0.34);
+    --landing-hover-shadow: rgba(0, 0, 0, 0.24);
+    --landing-grid-line: rgba(244, 244, 245, 0.04);
+    --landing-grain-a: rgba(244, 244, 245, 0.04);
+    --landing-grain-b: rgba(212, 212, 216, 0.045);
+  }
+
+  .dark .landing-grain {
+    opacity: 0.16;
+    mix-blend-mode: screen;
+  }
+
+  .landing-grid-bg {
+    background-image:
+      linear-gradient(var(--landing-grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--landing-grid-line) 1px, transparent 1px);
+    background-size: 42px 42px;
+  }
+
+  .landing-grain {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    pointer-events: none;
+    opacity: 0.23;
+    background-image:
+      radial-gradient(circle at 20% 30%, var(--landing-grain-a) 0 1px, transparent 1px),
+      radial-gradient(circle at 70% 80%, var(--landing-grain-b) 0 1px, transparent 1px);
+    background-size:
+      19px 19px,
+      23px 23px;
+    mix-blend-mode: multiply;
+  }
+
+  .landing-reveal {
+    animation: landing-reveal 720ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .landing-preview-swap {
+    animation: landing-preview-swap 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: view()) {
+      .landing-reveal {
+        animation-timeline: view();
+        animation-range: entry 0% cover 24%;
+      }
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .landing-reveal,
+    .landing-preview-swap {
+      animation: none;
+    }
+  }
+
+  @keyframes landing-reveal {
+    from {
+      opacity: 0;
+      transform: translateY(18px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes landing-preview-swap {
+    from {
+      opacity: 0;
+      transform: translateY(8px) scale(0.99);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+}
