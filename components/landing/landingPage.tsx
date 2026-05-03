@@ -13,12 +13,6 @@ import { ArrowRight, Mail } from "lucide-react";
 export function LandingPage() {
   return (
     <main className="landing-shell min-h-[100dvh] w-full max-w-full overflow-x-hidden bg-[var(--landing-bg)] pt-[65px] text-[var(--landing-text)] transition-colors duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] md:pt-0">
-      <a
-        href="#content"
-        className="sr-only cursor-pointer focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-30 focus:rounded-md focus:bg-[var(--landing-inverse)] focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-[var(--landing-inverse-text)]"
-      >
-        Skip to content
-      </a>
       <div className="landing-grain" aria-hidden="true" />
       <LandingNav />
       <HeroSection />
