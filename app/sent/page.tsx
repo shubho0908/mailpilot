@@ -6,8 +6,30 @@ import { redirect } from "next/navigation";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Sent - MailPilot",
-  description: "View your sent emails with AI assistance.",
+  title: "Sent",
+  description:
+    "View your sent emails with AI assistance. Track your email history, review sent messages, and use natural language commands to manage your outgoing communications.",
+  keywords: [
+    "sent emails",
+    "email history",
+    "outgoing mail",
+    "email tracking",
+    "sent folder",
+    "Gmail sent",
+  ],
+  openGraph: {
+    title: "Sent | MailPilot",
+    description:
+      "View your sent emails with AI assistance. Track your email history, review sent messages, and use natural language commands to manage your outgoing communications.",
+    url: "https://mailpilot.shubhojeet.com/sent",
+    type: "website",
+  },
+  twitter: {
+    title: "Sent | MailPilot",
+    description:
+      "View your sent emails with AI assistance. Track your email history, review sent messages, and use natural language commands to manage your outgoing communications.",
+    card: "summary_large_image",
+  },
 };
 
 export default async function SentPage() {

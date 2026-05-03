@@ -5,6 +5,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import ArrowLogo from "@/components/arrowLogo";
 import { AssistantToggle } from "./assistant/assistantToggle";
 import { SyncStatusIndicator } from "./syncStatus";
 import { UserProfileDropdown } from "@/components/user/userProfileDropdown";
@@ -31,21 +32,7 @@ export function MailNavbar() {
         <header className="app-shell flex flex-col bg-[var(--app-bg-translucent)] backdrop-blur-2xl rounded-2xl mt-3 sm:mt-4 border border-[var(--app-border)] shadow-[0_8px_32px_-4px_var(--app-shadow),0_4px_16px_-4px_var(--app-shadow),0_2px_8px_-2px_var(--app-shadow)] ring-1 ring-[var(--app-border)]/50 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]">
           <div className="flex items-center justify-between gap-1 px-3 py-2.5 sm:gap-2 sm:px-4">
             <div className="flex items-center gap-2.5 pr-3 border-[var(--app-border)]/60 flex-shrink-0 md:border-r md:pr-4">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[var(--app-accent)] shadow-[0_2px_8px_-1px_var(--app-shadow)] transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5">
-                <svg
-                  className="h-4 w-4 text-[var(--app-bg)]"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.7}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                  />
-                </svg>
-              </div>
+              <ArrowLogo width={40} height={40} />
               <span className="text-sm font-semibold tracking-tight text-[var(--app-text)]">
                 MailPilot
               </span>

@@ -17,8 +17,49 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MailPilot - AI-Powered Mail",
-  description: "AI-powered mail web application with natural language control",
+  metadataBase: new URL("https://mailpilot.shubhojeet.com"),
+  title: {
+    default: "MailPilot - AI-Powered Email Assistant",
+    template: "%s | MailPilot",
+  },
+  description:
+    "MailPilot is an AI-powered email assistant that lets you control Gmail with natural language. Filter mail, open threads, draft replies, and queue actions for approval.",
+  keywords: [
+    "AI email assistant",
+    "Gmail AI",
+    "natural language email",
+    "email automation",
+    "smart inbox",
+    "email productivity",
+    "AI mail",
+  ],
+  robots: {
+    index: true,
+    follow: true,
+  },
+  icons: {
+    icon: [
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    shortcut: "/favicon.ico",
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://mailpilot.shubhojeet.com",
+    siteName: "MailPilot",
+    title: "MailPilot - AI-Powered Email Assistant",
+    description:
+      "Control Gmail with natural language. Filter mail, open threads, draft replies, and queue actions for AI-powered email productivity.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "MailPilot - AI-Powered Email Assistant",
+    description:
+      "Control Gmail with natural language. Filter mail, open threads, draft replies, and queue actions for AI-powered email productivity.",
+  },
 };
 
 export default function RootLayout({

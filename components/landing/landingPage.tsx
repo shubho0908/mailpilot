@@ -1,4 +1,5 @@
 import { SignInButton } from "@/components/auth/SignInButton";
+import ArrowLogo from "@/components/arrowLogo";
 import {
   featurePanels,
   footerLinks,
@@ -8,7 +9,7 @@ import {
 import { LandingThemeToggle } from "@/components/landing/landingThemeToggle";
 import { ProductPreview } from "@/components/landing/productPreview";
 import { cn } from "@/lib/utils";
-import { ArrowRight, Mail } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 export function LandingPage() {
   return (
@@ -36,13 +37,12 @@ function LandingNav() {
           className="group flex items-center gap-3 cursor-pointer"
           aria-label="MailPilot home"
         >
-          <span className="grid size-8 place-items-center rounded-md border border-[var(--landing-border)] bg-[var(--landing-soft)] transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:-translate-y-0.5">
-            <Mail
-              className="size-4 text-[var(--landing-accent)]"
-              strokeWidth={1.7}
-              aria-hidden="true"
-            />
-          </span>
+          <ArrowLogo
+            width={40}
+            height={40}
+            className="transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:-translate-y-0.5"
+            aria-hidden="true"
+          />
           <span className="text-sm font-semibold tracking-tight">MailPilot</span>
         </a>
 

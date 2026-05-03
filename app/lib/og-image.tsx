@@ -1,0 +1,187 @@
+import { ImageResponse } from "next/og";
+
+export const size = {
+  width: 1200,
+  height: 630,
+};
+
+export const contentType = "image/png";
+
+export function OgImage() {
+  return new ImageResponse(
+    <div
+      style={{
+        height: "100%",
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "#0a0a0a",
+        fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background:
+            "radial-gradient(circle at 30% 40%, rgba(99, 102, 241, 0.08) 0%, transparent 50%), radial-gradient(circle at 70% 60%, rgba(139, 92, 246, 0.06) 0%, transparent 50%)",
+        }}
+      />
+
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 48,
+          position: "relative",
+          zIndex: 1,
+        }}
+      >
+        <svg
+          width={180}
+          height={195}
+          viewBox="0 0 132 143"
+          style={{
+            flexShrink: 0,
+          }}
+        >
+          <defs>
+            <linearGradient
+              id="SVGID_1_"
+              x1="24.16"
+              x2="107.6"
+              y1="1.612"
+              y2="141.8"
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop stopColor="#4B4B4D" offset="0" />
+              <stop stopColor="#3E3E40" offset=".03308" />
+              <stop stopColor="#2E2D30" offset=".09484" />
+              <stop stopColor="#232225" offset=".1765" />
+              <stop stopColor="#1C1B1E" offset=".2935" />
+              <stop stopColor="#1A191C" offset=".6196" />
+              <stop stopColor="#050507" offset="1" />
+            </linearGradient>
+          </defs>
+
+          <path
+            fill="url(#SVGID_1_)"
+            d="m99.8 142.2h-66.4c-7.8-0.1-13.8-0.9-19.4-4.7-6.7-4.3-13-13.1-13.6-24.7-0.2-2.8-0.1-71.7 0-81.2 0.3-12.9 9.1-28.8 26.2-30.3 2.4-0.3 4.8-0.4 7.2-0.4l64.2-0.1c6.5 0 12.8 0.3 18 2.9 8.3 4.2 14.9 12.8 15.7 24.5 0.2 3 0.2 6 0.2 9v68.7c0 5.3-0.3 10.5-1.6 14.7-3.2 10.1-11.1 21.6-30.5 21.6z"
+          />
+
+          <path
+            fill="#FFFFFF"
+            d="m105.2 41.5c-1.2-1.7-3.3-3.6-7.6-3.5-4.4 0.1-7.5 2.5-13 3.8-2.7 0.7-4.3 0.7-6.1 0.6 1.5 1.5 3.8 2.3 6.7 2.2 3.1-0.1 6.9-1.9 9.3-2.6 3-0.9 7.4-1.4 8.8 3.4 2.6-1.4 6.9-2.3 9.7 0-6.7 0.5-13.1 6.6-16.4 10.4-4.5 5.1-10.5 13.2-16.8 19.9-9.6 10.1-19.2 18.2-33 23-4.2 1.3-8.9 3.3-15.2 3.4-4.4 0-8-1.2-9.3-4.3-2.9-5.6 2.3-12.8 5.6-17.6-2.6 1.9-13.4 11.4-9.3 19.7 1.3 3 4 5.3 7.7 6.3 5.8 1.7 14 0.9 22.8-1.9 15.2-4.7 25.7-13.2 35.2-24.4 6.6-7.8 12.2-16.5 18.5-23.6 2.9-3.3 7.7-8.4 14.7-9.7-2.2-4.6-6.4-6.4-12.3-5.1z"
+          />
+          <path
+            fill="#FFFFFF"
+            d="m35.4 40.3c7 2.7 14.6 3.4 21.1 4.4 5 0.8 10.1 1.5 13.8 4.3 3.3 2.3 5.8 6 5.8 10.8 0.3 8.1-5.1 15.6-9.5 18.7-1.7 1.2-3.5 1.1-5 0.4l-25.3-12.4 7.9-2c-0.9-0.5-2.8-1.9-3.8-2.9-3.3 0.7-6.6 0.8-9 3.6-1.7 2.1-1.8 3.9-1.1 6.8l6.2 26 9-1.8 9.3-12.8-3.4-1.8-11.1 15-6.5-27.1 25.8 12.4c2.1 1 3.8 1.8 6.4 1.5 3.1-0.2 6.5-4 8.5-6.7 3.8-5.1 6.6-10.8 6.5-17.3s-3.6-11.5-7.8-14.7c-6-4.2-12.7-4.9-19.7-6.1-10.9-1.7-20.1-3.4-25.6-7.5l-3-2.5c0.4 4.4 3.6 9.4 10.5 11.7z"
+          />
+          <path
+            fill="#FFFFFF"
+            d="m102.4 83.4-4-16.8-2.9 4 3.3 15-10.5-5.7-2.4 2.8 10.3 5.6-0.1 0.2-21.5 4.7c-2.2 1.8-4.8 3.7-8.1 5.9l30.6-6.9c1.9-0.3 3-0.8 3.9-1.8 1.7-1.4 2-3.5 1.4-7z"
+          />
+          <path
+            fill="#FFFFFF"
+            d="m54.6 48.8c-5.7-0.9-14-1.4-21.1-5l-3.1-1.7c3.4 8.4 11 11 19.1 12.1 5.1 0.7 11.4 0.5 16.1 4.6-0.2-2-2.7-8.5-11-10z"
+          />
+          <path
+            fill="#FFFFFF"
+            d="m55.6 59.4c-3.7-0.3-9.1-0.8-13.9-2.6 2.9 5.8 7.5 7.1 13.2 7.6 4.1 0.2 8 0.2 11.8 3.2-1.1-4.7-4.3-7.7-11.1-8.2z"
+          />
+          <path
+            fill="#FFFFFF"
+            d="m95.1 44.1c0 2.3-1.5 3.9-3.6 4.1v0.3c1.9 0 3.5 1.6 3.5 4h0.2c0-1.6 1.4-3.9 3.4-4v-0.3c-2 0-3.4-1.7-3.4-4.1h-0.1z"
+          />
+        </svg>
+
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
+          }}
+        >
+          <div
+            style={{
+              fontSize: 88,
+              fontWeight: 700,
+              color: "#ffffff",
+              letterSpacing: "-0.03em",
+              lineHeight: 1,
+              marginBottom: 8,
+            }}
+          >
+            MailPilot
+          </div>
+          <div
+            style={{
+              fontSize: 28,
+              color: "#a1a1aa",
+              fontWeight: 400,
+              letterSpacing: "-0.01em",
+              lineHeight: 1.4,
+            }}
+          >
+            AI that operates your Gmail
+          </div>
+          <div
+            style={{
+              display: "flex",
+              gap: 12,
+              marginTop: 20,
+            }}
+          >
+            <div
+              style={{
+                padding: "10px 20px",
+                background: "rgba(99, 102, 241, 0.15)",
+                border: "1px solid rgba(99, 102, 241, 0.3)",
+                borderRadius: 24,
+                color: "#ffffff",
+                fontSize: 15,
+                fontWeight: 500,
+              }}
+            >
+              Natural Language
+            </div>
+            <div
+              style={{
+                padding: "10px 20px",
+                background: "rgba(139, 92, 246, 0.15)",
+                border: "1px solid rgba(139, 92, 246, 0.3)",
+                borderRadius: 24,
+                color: "#ffffff",
+                fontSize: 15,
+                fontWeight: 500,
+              }}
+            >
+              Smart Actions
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        style={{
+          position: "absolute",
+          bottom: 48,
+          fontSize: 15,
+          fontWeight: 500,
+          letterSpacing: "0.05em",
+          color: "#52525b",
+          zIndex: 1,
+        }}
+      >
+        mailpilot.shubhojeet.com
+      </div>
+    </div>,
+    {
+      ...size,
+    }
+  );
+}
