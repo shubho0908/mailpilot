@@ -1,6 +1,6 @@
 "use client";
 
-import { useReducer, useCallback } from "react";
+import { useReducer, useCallback, useEffect, useRef } from "react";
 import { useSendEmail } from "@/hooks/mutations/use-send-email";
 import { useMailStore } from "@/lib/store/mail-store";
 import { Input } from "@/components/ui/input";
@@ -69,6 +69,7 @@ function ComposeHeader({ mode, onCancel }: { mode: string; onCancel: () => void 
 export function Compose({ onClose }: { onClose: () => void }) {
   const composeState = useMailStore((state) => state.composeState);
   const setComposeState = useMailStore((state) => state.setComposeState);
+  const setCurrentComposeFormState = useMailStore((state) => state.setCurrentComposeFormState);
 
   const mode = composeState?.mode || "compose";
   const threadId = composeState?.threadId;
@@ -85,29 +86,25 @@ export function Compose({ onClose }: { onClose: () => void }) {
   });
 
   const { to, cc, bcc, subject, body, showCcBcc } = state;
+  const prevComposeStateRef = useRef(composeState);
+  useEffect(() => {
+    if (
+      composeState &&
+      JSON.stringify(composeState) !== JSON.stringify(prevComposeStateRef.current)
+    ) {
+      dispatch({ type: "SET_TO", value: composeState.initialTo || "" });
+      dispatch({ type: "SET_CC", value: composeState.initialCc || "" });
+      dispatch({ type: "SET_BCC", value: composeState.initialBcc || "" });
+      dispatch({ type: "SET_SUBJECT", value: composeState.initialSubject || "" });
+      dispatch({ type: "SET_BODY", value: composeState.initialBody || "" });
+      if (composeState.initialCc || composeState.initialBcc) {
+        dispatch({ type: "TOGGLE_CC_BCC" });
+      }
+      prevComposeStateRef.current = composeState;
+    }
+  }, [composeState]);
 
   const { mutate: sendEmail, isPending, isSuccess } = useSendEmail();
-
-  const updateComposeDraft = useCallback(
-    (updates: {
-      initialTo?: string;
-      initialCc?: string;
-      initialBcc?: string;
-      initialSubject?: string;
-      initialBody?: string;
-    }) => {
-      setComposeState({
-        ...(composeState || { mode }),
-        initialTo: to,
-        initialCc: cc,
-        initialBcc: bcc,
-        initialSubject: subject,
-        initialBody: body,
-        ...updates,
-      });
-    },
-    [bcc, body, cc, composeState, mode, setComposeState, subject, to]
-  );
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -173,7 +170,7 @@ export function Compose({ onClose }: { onClose: () => void }) {
                   value={to}
                   onChange={(e) => {
                     dispatch({ type: "SET_TO", value: e.target.value });
-                    updateComposeDraft({ initialTo: e.target.value });
+                    setCurrentComposeFormState({ to: e.target.value, cc, bcc, subject, body });
                   }}
                   required
                   placeholder="recipient@example.com"
@@ -206,7 +203,7 @@ export function Compose({ onClose }: { onClose: () => void }) {
                       value={cc}
                       onChange={(e) => {
                         dispatch({ type: "SET_CC", value: e.target.value });
-                        updateComposeDraft({ initialCc: e.target.value });
+                        setCurrentComposeFormState({ to, cc: e.target.value, bcc, subject, body });
                       }}
                       placeholder="cc@example.com"
                       disabled={isPending || isSuccess}
@@ -226,7 +223,7 @@ export function Compose({ onClose }: { onClose: () => void }) {
                       value={bcc}
                       onChange={(e) => {
                         dispatch({ type: "SET_BCC", value: e.target.value });
-                        updateComposeDraft({ initialBcc: e.target.value });
+                        setCurrentComposeFormState({ to, cc, bcc: e.target.value, subject, body });
                       }}
                       placeholder="bcc@example.com"
                       disabled={isPending || isSuccess}
@@ -249,7 +246,7 @@ export function Compose({ onClose }: { onClose: () => void }) {
                   value={subject}
                   onChange={(e) => {
                     dispatch({ type: "SET_SUBJECT", value: e.target.value });
-                    updateComposeDraft({ initialSubject: e.target.value });
+                    setCurrentComposeFormState({ to, cc, bcc, subject: e.target.value, body });
                   }}
                   required
                   placeholder="Enter subject..."
@@ -270,7 +267,7 @@ export function Compose({ onClose }: { onClose: () => void }) {
                   value={body}
                   onChange={(e) => {
                     dispatch({ type: "SET_BODY", value: e.target.value });
-                    updateComposeDraft({ initialBody: e.target.value });
+                    setCurrentComposeFormState({ to, cc, bcc, subject, body: e.target.value });
                   }}
                   required
                   rows={8}

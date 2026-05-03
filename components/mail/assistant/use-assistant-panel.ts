@@ -201,7 +201,7 @@ export function useAssistantPanel() {
 
     try {
       const openEmailId = getOpenEmailId(pathname);
-      const { emailListContext, filters } = useMailStore.getState();
+      const { emailListContext, filters, currentComposeFormState } = useMailStore.getState();
       const currentUrl =
         typeof window === "undefined"
           ? pathname
@@ -249,6 +249,7 @@ export function useAssistantPanel() {
             latestUserMessage: content,
             currentDate: new Date().toISOString().split("T")[0],
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            currentComposeFormState,
           },
         }),
       });

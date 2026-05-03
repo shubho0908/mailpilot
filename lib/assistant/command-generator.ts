@@ -71,6 +71,17 @@ function buildSystemPrompt(context: z.infer<typeof assistantRequestSchema>["cont
       ].join("\n")
     : "";
 
+  const composeFormContext = context.currentComposeFormState
+    ? [
+        `Current compose form:`,
+        `To: ${context.currentComposeFormState.to}`,
+        `Cc: ${context.currentComposeFormState.cc}`,
+        `Bcc: ${context.currentComposeFormState.bcc}`,
+        `Subject: ${context.currentComposeFormState.subject}`,
+        `Body: ${context.currentComposeFormState.body ? "(has content)" : "(empty)"}`,
+      ].join("\n")
+    : "";
+
   const prompt = [
     "Role: MailPilot email assistant. Convert user input to a short executable email plan.",
     "",
@@ -102,12 +113,15 @@ function buildSystemPrompt(context: z.infer<typeof assistantRequestSchema>["cont
     "- Use shouldSend=true ONLY when the user explicitly uses words like 'send', 'send it', 'send the email', 'send the reply', etc. If the user says 'compose a reply' or 'draft a reply', do NOT set shouldSend=true.",
     "- Use real Gmail IDs only from provided context.",
     "- Dates must be ISO format (YYYY-MM-DD).",
-    "- If required information is missing, return an answer step with a message asking for that missing information in the 'response' field.",
+    "- CRITICAL HIGHEST PRIORITY: When Current compose form exists with partial data (to, subject, body), ALWAYS use the existing values and GENERATE the missing fields. When user asks to 'write', 'complete', 'fill', 'help with', or similar for an email, NEVER return an answer step asking for the body. Always generate a compose command with ALL fields filled.",
+    "- When generating the body for a compose command, infer reasonable content from the subject line and recipient. For example, if subject is 'Meeting Tomorrow', generate a body like 'Hi [name], let's meet tomorrow to discuss...'",
+    "- Only return an answer step asking for missing information if there is NO current compose form at all.",
     "- If replying or forwarding from an open email, use the open email context.",
     "- The response field must always be a string explaining what action will be taken or what information is needed.",
     "",
     `Context: Date=${context.currentDate} TZ=${context.timezone || "unknown"} URL=${context.currentUrl || context.pathname} Path=${context.pathname} View=${context.currentView || "unknown"} OpenEmail=${context.openEmailId || "none"} Filters=${JSON.stringify(context.filters || {})}`,
     openEmailContext,
+    composeFormContext,
     formatListContext("Current visible email list", context.currentList),
     formatListContext("Last assistant result list", context.lastAssistantResults),
   ]

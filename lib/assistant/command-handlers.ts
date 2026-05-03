@@ -187,7 +187,14 @@ export function handleComposeCommand(
   command: AssistantPlanStep,
   ctx: CommandHandlerContext
 ): CommandHandlerResult {
-  if (!command.to || !command.subject || !command.body) {
+  const currentForm = ctx.mutableContext.currentComposeFormState;
+  const to = command.to || currentForm?.to || "";
+  const subject = command.subject || currentForm?.subject || "";
+  const body = command.body || currentForm?.body || "";
+  const cc = command.cc || currentForm?.cc || "";
+  const bcc = command.bcc || currentForm?.bcc || "";
+
+  if (!to || !subject || !body) {
     return {
       shouldContinue: false,
       earlyResponse: assistantResponseSchema.parse({
@@ -197,7 +204,7 @@ export function handleComposeCommand(
       }),
     };
   }
-  if (!hasValidRecipients(command.to)) {
+  if (!hasValidRecipients(to)) {
     return {
       shouldContinue: false,
       earlyResponse: assistantResponseSchema.parse({
@@ -213,15 +220,15 @@ export function handleComposeCommand(
   ctx.actions.push({
     type: "composeDraft",
     draft: {
-      to: command.to,
-      cc: command.cc || undefined,
-      bcc: command.bcc || undefined,
-      subject: command.subject,
-      body: command.body,
+      to,
+      cc: cc || undefined,
+      bcc: bcc || undefined,
+      subject,
+      body,
       mode: composeModeSchema.enum.compose,
     },
     requiresApproval: shouldSend,
-    approvalPrompt: shouldSend ? `Send this email to ${command.to}?` : undefined,
+    approvalPrompt: shouldSend ? `Send this email to ${to}?` : undefined,
   });
   ctx.mutableContext.openEmailId = null;
 

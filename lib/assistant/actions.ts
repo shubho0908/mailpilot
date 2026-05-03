@@ -222,6 +222,16 @@ export const assistantRequestSchema = z.object({
     latestUserMessage: z.string().optional(),
     currentDate: z.string(),
     timezone: z.string().optional(),
+    currentComposeFormState: z
+      .object({
+        to: z.string(),
+        cc: z.string(),
+        bcc: z.string(),
+        subject: z.string(),
+        body: z.string(),
+      })
+      .nullable()
+      .optional(),
   }),
 });
 
