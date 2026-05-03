@@ -64,10 +64,6 @@ Examples:
 
 Uses Gmail Watch API with Pub/Sub for push notifications, history API for change detection, and SSE for browser updates. Falls back to 20-second polling if Pub/Sub isn't configured.
 
-## What's Next
-
-Thread view, rich assistant panel with previews, human-in-the-loop confirmation before sending, keyboard shortcuts, mobile optimization, dark mode refinement, E2E tests with Playwright, sync worker extraction for scaling, multi-provider support (Outlook, IMAP), advanced AI features (summarization, smart replies).
-
 ## Development
 
 ```bash
