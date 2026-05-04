@@ -2,6 +2,13 @@
 
 Gmail client with an AI assistant that controls the UI through natural language. The assistant can compose emails, filter your inbox, open threads, and execute actions — not just answer questions.
 
+## Demo
+
+
+https://github.com/user-attachments/assets/80bf62e0-2286-41c8-ad21-b8b7135a6767
+
+
+
 ## Quick Start
 
 ```bash
