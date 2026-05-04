@@ -4,10 +4,7 @@ Gmail client with an AI assistant that controls the UI through natural language.
 
 ## Demo
 
-
 https://github.com/user-attachments/assets/80bf62e0-2286-41c8-ad21-b8b7135a6767
-
-
 
 ## Quick Start
 
@@ -81,3 +78,21 @@ bun run format           # Format code
 bun run db:studio        # Database studio
 bun run db:migrate       # Run migrations
 ```
+
+## What I'd Improve With More Time
+
+What excites me about this project isn't just the AI assistant — it's the opportunity to reinvent how we interact with email. Here's where I'd take this:
+
+**Email Intelligence**
+The assistant should understand your inbox at a deeper level. Summarize threads, extract action items, detect urgency, and suggest smart replies. "Show me emails that need my attention today" becomes possible when the AI actually reads and understands context. This is the natural evolution of the assistant — from executing commands to understanding meaning.
+
+**Semantic Search**
+Keyword search is the past. I want to search by meaning: "emails about the Q4 budget" or "messages where someone is waiting on me." The AI would understand the semantic content, not just match strings. This requires embedding emails and doing vector similarity search, but the payoff is huge — you find what you actually want, not just what you typed.
+
+**Email Triage**
+Imagine your inbox automatically categorized: urgent, requires action, informational, can wait. The assistant learns your priorities over time and surfaces what matters. No more drowning in notification badges. The technical challenge is building a model that respects individual differences — what's urgent for me might not be urgent for you.
+
+**Multi-Account Harmony**
+People have work email, personal email, side projects. A unified inbox where the assistant understands context across accounts — "show me all emails about the project from any account" — would be genuinely useful. The architecture challenge is handling multiple OAuth tokens, sync states, and ensuring the assistant doesn't get confused about which account it's operating on.
+
+The goal isn't more features. It's making email feel less like a chore and more like a tool that actually helps you get work done. The AI assistant is the beginning, not the end.
